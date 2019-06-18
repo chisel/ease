@@ -42,6 +42,66 @@ class Hammer {
             console.log(chalk_1.default.bold.greenBright(`[CONFIG] ${message}`));
         this._logToFile(`[CONFIG] ${message}`);
     }
+    async _execJob(jobName) {
+        if (!this.jobs[jobName]) {
+            this._logError(`Job "${jobName}" not found!`);
+            throw new Error(`Job "${jobName}" not found!`);
+        }
+        this._log(`Executing job "${jobName}"...`);
+        const job = this.jobs[jobName];
+        for (const taskName of job.tasks) {
+            const task = this.tasks[taskName];
+            if (!task.runner) {
+                this._logError(`Task "${taskName}" does not have a definition!`);
+                throw new Error(`Task "${taskName}" does not have a definition!`);
+            }
+            if (task.beforeHook) {
+                this._log(`Running before hook of task "${taskName}"...`);
+                try {
+                    await task.beforeHook(jobName, () => task.suspended = true);
+                }
+                catch (error) {
+                    this._logError(`An error has occurred on the before hook of the task "${taskName}"!\n${error}`);
+                    throw new Error(`An error has occurred on the before hook of the task "${taskName}"!\n${error}`);
+                }
+            }
+            if (job.suspended) {
+                this._logWarning(`Job "${jobName}" was suspended!`);
+                return;
+            }
+            if (task.suspended) {
+                this._logWarning(`Task "${taskName}" was suspended!`);
+                continue;
+            }
+            this._log(`Running task "${taskName}"...`);
+            try {
+                await task.runner(jobName);
+            }
+            catch (error) {
+                this._logError(`An error has occurred on task "${taskName}"!\n${error}`);
+                throw new Error(`An error has occurred on task "${taskName}"!\n${error}`);
+            }
+            if (job.suspended) {
+                this._logWarning(`Job "${jobName}" was suspended!`);
+                return;
+            }
+            if (task.afterHook) {
+                this._log(`Running after hook of task "${taskName}"...`);
+                try {
+                    await task.afterHook(jobName);
+                }
+                catch (error) {
+                    this._logError(`An error has occurred on the after hook of the task "${taskName}"!\n${error}`);
+                    throw new Error(`An error has occurred on the after hook of the task "${taskName}"!\n${error}`);
+                }
+            }
+            if (job.suspended) {
+                this._logWarning(`Job "${jobName}" was suspended!`);
+                return;
+            }
+        }
+        this._log(`Job "${jobName}" was executed successfully.`);
+    }
     task(name, task) {
         const parsed = this._parseName(name);
         if (parsed.hook && (parsed.hook !== 'before' && parsed.hook !== 'after')) {
@@ -118,65 +178,30 @@ class Hammer {
             });
         });
     }
-    async _execJob(jobName) {
-        if (!this.jobs[jobName]) {
-            this._logError(`Job "${jobName}" not found!`);
-            throw new Error(`Job "${jobName}" not found!`);
-        }
-        this._log(`Executing job "${jobName}"...`);
-        const job = this.jobs[jobName];
-        for (const taskName of job.tasks) {
-            const task = this.tasks[taskName];
-            if (!task.runner) {
-                this._logError(`Task "${taskName}" does not have a definition!`);
-                throw new Error(`Task "${taskName}" does not have a definition!`);
+    _execJobsAsync(jobNames) {
+        return new Promise((resolve, reject) => {
+            const promises = [];
+            for (const jobName of jobNames) {
+                promises.push(new Promise((resolve, reject) => {
+                    this._execJob(jobName)
+                        .catch(error => {
+                        this._logError(`Job "${jobName}" has failed due to an error:\n${error}`);
+                    })
+                        .finally(resolve);
+                }));
             }
-            if (task.beforeHook) {
-                this._log(`Running before hook of task "${taskName}"...`);
-                try {
-                    await task.beforeHook(jobName, () => task.suspended = true);
-                }
-                catch (error) {
-                    this._logError(`An error has occurred on the before hook of the task "${taskName}"!\n${error}`);
-                    throw new Error(`An error has occurred on the before hook of the task "${taskName}"!\n${error}`);
-                }
-            }
-            if (job.suspended) {
-                this._logWarning(`Job "${jobName}" was suspended!`);
-                return;
-            }
-            if (task.suspended) {
-                this._logWarning(`Task "${taskName}" was suspended!`);
-                continue;
-            }
-            this._log(`Running task "${taskName}"...`);
+            Promise.all(promises).finally(resolve);
+        });
+    }
+    async _execJobsSync(jobNames) {
+        for (const jobName of jobNames) {
             try {
-                await task.runner(jobName);
+                await this._execJob(jobName);
             }
             catch (error) {
-                this._logError(`An error has occurred on task "${taskName}"!\n${error}`);
-                throw new Error(`An error has occurred on task "${taskName}"!\n${error}`);
-            }
-            if (job.suspended) {
-                this._logWarning(`Job "${jobName}" was suspended!`);
-                return;
-            }
-            if (task.afterHook) {
-                this._log(`Running after hook of task "${taskName}"...`);
-                try {
-                    await task.afterHook(jobName);
-                }
-                catch (error) {
-                    this._logError(`An error has occurred on the after hook of the task "${taskName}"!\n${error}`);
-                    throw new Error(`An error has occurred on the after hook of the task "${taskName}"!\n${error}`);
-                }
-            }
-            if (job.suspended) {
-                this._logWarning(`Job "${jobName}" was suspended!`);
-                return;
+                this._logError(`Job "${jobName}" has failed due to an error:\n${error}`);
             }
         }
-        this._log(`Job "${jobName}" was executed successfully.`);
     }
 }
 exports.Hammer = Hammer;

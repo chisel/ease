@@ -144,8 +144,6 @@ module.exports = hammer => {
   hammer.task('async-task:before', (jobName, suspend) => {
 
     hammer.log('Before async task...');
-    suspend();
-    hammer.suspend(jobName);
 
   });
 

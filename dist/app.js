@@ -10,9 +10,10 @@ const hammer_1 = require("./hammer");
 // Define CLI
 commander_1.default
     .version('1.0.0')
-    .usage('[options] <job>')
+    .usage('[options] <jobs>')
     .option('-c, --config <path>', 'Path to the hammer config file')
     .option('-v --verbose', 'Detailed console logs')
+    .option('-a --async', 'Run all jobs at the same time')
     .parse(process.argv);
 // Set config path to default if not provided
 commander_1.default.config = path_1.default.join(process.cwd(), commander_1.default.config || 'hammer.js');
@@ -23,6 +24,8 @@ const config = require(commander_1.default.config);
 const hammer = new hammer_1.Hammer(commander_1.default.verbose);
 // Configure Hammer
 config(hammer);
-// Run the job
-hammer._execJob(commander_1.default.args[0])
-    .finally(() => process.exit());
+// Run the jobs
+if (commander_1.default.async)
+    hammer._execJobsAsync(commander_1.default.args);
+else
+    hammer._execJobsSync(commander_1.default.args);

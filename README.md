@@ -86,11 +86,14 @@ Running `hammer test` will execute the following tasks:
 
 # CLI Options
 
-`hammer [options] <job>`
+`hammer [options] <jobs>`
 
 Options:
   - `-v --verbose`: Displays detailed logs in the console.
   - `-c --config`: Override the default `hammer.js` file location.
+  - `-a --async`: Runs all jobs at the same time.
+
+Example: `hammer job1 job2 --async`
 
 # Building
 
