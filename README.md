@@ -16,6 +16,7 @@ Air Hammer looks for a configuration file named `hammer.js` inside the current w
 
   - `hammer.task(name, callback)`: Defines a task with the given name and calls the callback for performing the task. The call back should either return void (for synchronous execution) or return a void promise (for asynchronous execution). Callback will be called with two parameters: `jobName` which holds the current executing job name and either `suspend`, which is a function that suspends the current task from running (only available on the `:before` hook) or `error`, which is an error object (only available on the `:error` hook.)
   - `hammer.job(name, tasks)`: Defines a job with the given name and a list of the tasks to execute in order.
+  - `hammer.hook(name, callback)`: Defines a job hook with a callback.
   - `hammer.suspend(jobName)`: Suspends a job by name.
   - `hammer.log(message)`: Logs a message which will be shown on the console and logged into `hammer.log` file.
   - `hammer.request(options)`: Sends a request using the given [options](https://www.npmjs.com/package/request#requestoptions-callback) and returns a promise with the response (the body of the response will be parsed to JSON if the correct headers are set by the target.)
@@ -27,6 +28,10 @@ The following hooks are available for all tasks which will be defined when appen
   - `:after`: Runs after the task. Can be asynchronous if the callback returns a promise.
   - `:suspend`: Runs after the task was suspended. Can be asynchronous if the callback returns a promise.
   - `:error`: Runs after an error has occurred in the task or any of its hooks. Can be asynchronous if the callback returns a promise.
+
+## Job Hooks
+
+Jobs have hooks identical to tasks, the only difference is the callback arguments in which the `jobName` is not provided.
 
 ## Example Hammer Configuration
 
@@ -76,7 +81,14 @@ module.exports = hammer => {
 
   });
 
-  hammer.jon('test', ['sync-task', 'async-task', 'sync-task']);
+  hammer.job('test', ['sync-task', 'async-task', 'sync-task']);
+
+  // Define job error handler
+  hammer.hook('test:error', error => {
+
+    hammer.log('Caught error: ' + error);
+
+  });
 
 };
 ```
@@ -93,9 +105,8 @@ Running `hammer test` will execute the following tasks:
 Options:
   - `-v --verbose`: Displays detailed logs in the console.
   - `-c --config`: Override the default `hammer.js` file location.
-  - `-a --async`: Runs all jobs at the same time.
 
-Example: `hammer job1 job2 --async`
+Example: `hammer job1 job2`
 
 # Building
 

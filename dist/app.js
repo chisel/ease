@@ -13,7 +13,6 @@ commander_1.default
     .usage('[options] <jobs>')
     .option('-c, --config <path>', 'Path to the hammer config file')
     .option('-v --verbose', 'Detailed console logs')
-    .option('-a --async', 'Run all jobs at the same time')
     .parse(process.argv);
 // Set config path to default if not provided
 commander_1.default.config = path_1.default.join(process.cwd(), commander_1.default.config || 'hammer.js');
@@ -25,7 +24,4 @@ const hammer = new hammer_1.Hammer(commander_1.default.verbose);
 // Configure Hammer
 config(hammer);
 // Run the jobs
-if (commander_1.default.async)
-    hammer._execJobsAsync(commander_1.default.args);
-else
-    hammer._execJobsSync(commander_1.default.args);
+hammer._execJobs(commander_1.default.args);

@@ -11,7 +11,6 @@ program
   .usage('[options] <jobs>')
   .option('-c, --config <path>', 'Path to the hammer config file')
   .option('-v --verbose', 'Detailed console logs')
-  .option('-a --async', 'Run all jobs at the same time')
   .parse(process.argv);
 
 // Set config path to default if not provided
@@ -28,5 +27,4 @@ const hammer: Hammer = new Hammer(program.verbose);
 config(hammer);
 
 // Run the jobs
-if ( program.async ) hammer._execJobsAsync(program.args);
-else hammer._execJobsSync(program.args);
+hammer._execJobs(program.args);
