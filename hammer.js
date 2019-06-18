@@ -141,35 +141,39 @@
 
 module.exports = hammer => {
 
-  hammer.task('async-task:before', (jobName, suspend) => {
+  hammer.task('task1:before', (jobName, suspend) => {
 
-    hammer.log('Before async task...');
-
-  });
-
-  hammer.task('async-task', jobName => {
-
-    return new Promise((resolve, reject) => {
-
-      hammer.log(`Waiting for 3 seconds on job ${jobName}...`);
-
-      setTimeout(() => {
-
-        resolve();
-
-      }, 3000);
-
-    });
+    hammer.log('task1:before suspending task1...');
+    suspend();
 
   });
 
-  hammer.task('sync-task', jobName => {
+  hammer.task('task1:suspend', (jobName) => {
 
-    hammer.log(`Inside job ${jobName}`);
+    hammer.log('task1:suspend on job ' + jobName);
+    throw new Error('This error was thrown from task1:suspend!');
 
   });
 
-  hammer.job('test', ['async-task', 'sync-task']);
-  hammer.job('test2', ['sync-task', 'async-task']);
+  hammer.task('task1:error', (jobName, error) => {
+
+    hammer.log('Error caught: ' + error);
+    throw new Error('This error was thrown from task1:error!');
+
+  });
+
+  hammer.task('task1', () => {
+
+    hammer.log('TASK 1');
+
+  });
+
+  hammer.task('task2', () => {
+
+    hammer.log('TASK 2');
+
+  });
+
+  hammer.job('test', ['task1', 'task2']);
 
 };

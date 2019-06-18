@@ -1,4 +1,4 @@
-import { Registry, Task, Job, TaskRunner } from './app.model';
+import { Registry, Task, Job, GenericTaskRunner, ErrorTaskRunner } from './app.model';
 import path from 'path';
 import fs from 'fs-extra';
 import os from 'os';
@@ -63,6 +63,27 @@ export class Hammer {
 
   }
 
+  private async _onTaskError(handler: ErrorTaskRunner|undefined, taskName: string, jobName: string, error: Error) {
+
+    if ( handler ) {
+
+      try {
+
+        await handler(jobName, error);
+
+      }
+      catch (error) {
+
+        this._logError(`An error has occurred on the error hook of task "${taskName}"\n${error}`);
+
+        throw new Error(`An error has occurred on the error hook of task "${taskName}"\n${error}`);
+
+      }
+
+    }
+
+  }
+
   private async _execJob(jobName: string) {
 
     if ( ! this.jobs[jobName] ) {
@@ -85,6 +106,8 @@ export class Hammer {
 
         this._logError(`Task "${taskName}" does not have a definition!`);
 
+        await this._onTaskError(task.errorHook, taskName, jobName, new Error(`Task "${taskName}" does not have a definition!`));
+
         throw new Error(`Task "${taskName}" does not have a definition!`);
 
       }
@@ -101,6 +124,8 @@ export class Hammer {
         catch (error) {
 
           this._logError(`An error has occurred on the before hook of the task "${taskName}"!\n${error}`);
+
+          await this._onTaskError(task.errorHook, taskName, jobName, error);
 
           throw new Error(`An error has occurred on the before hook of the task "${taskName}"!\n${error}`);
 
@@ -120,6 +145,27 @@ export class Hammer {
 
         this._logWarning(`Task "${taskName}" was suspended!`);
 
+        if ( task.suspendHook ) {
+
+          this._log(`Running suspend hook of task "${taskName}"...`);
+
+          try {
+
+            await task.suspendHook(jobName);
+
+          }
+          catch (error) {
+
+            this._logError(`An error has occurred on the suspend hook of the task "${taskName}"!\n${error}`);
+
+            await this._onTaskError(task.errorHook, taskName, jobName, error);
+
+            throw new Error(`An error has occurred on the suspend hook of the task "${taskName}"!\n${error}`);
+
+          }
+
+        }
+
         continue;
 
       }
@@ -134,6 +180,8 @@ export class Hammer {
       catch (error) {
 
         this._logError(`An error has occurred on task "${taskName}"!\n${error}`);
+
+        await this._onTaskError(task.errorHook, taskName, jobName, error);
 
         throw new Error(`An error has occurred on task "${taskName}"!\n${error}`);
 
@@ -160,6 +208,8 @@ export class Hammer {
 
           this._logError(`An error has occurred on the after hook of the task "${taskName}"!\n${error}`);
 
+          await this._onTaskError(task.errorHook, taskName, jobName, error);
+
           throw new Error(`An error has occurred on the after hook of the task "${taskName}"!\n${error}`);
 
         }
@@ -180,11 +230,17 @@ export class Hammer {
 
   }
 
-  public task(name: string, task: TaskRunner): void {
+  public task(name: string, task: GenericTaskRunner): void {
 
     const parsed = this._parseName(name);
+    const hooksWhitelist: string[] = [
+      'before',
+      'after',
+      'error',
+      'suspend'
+    ];
 
-    if ( parsed.hook && (parsed.hook !== 'before' && parsed.hook !== 'after') ) {
+    if ( parsed.hook && ! hooksWhitelist.includes(parsed.hook) ) {
 
       this._logError(`Unsupported hook name "${parsed.hook}" for task "${parsed.name}"`);
 
@@ -211,6 +267,18 @@ export class Hammer {
 
       this._logConfig(`Registering after hook for task "${parsed.name}"`);
       this.tasks[parsed.name].afterHook = task;
+
+    }
+    else if ( parsed.hook === 'error' ) {
+
+      this._logConfig(`Registering error hook for task "${parsed.name}"`);
+      this.tasks[parsed.name].errorHook = task;
+
+    }
+    else if ( parsed.hook === 'suspend' ) {
+
+      this._logConfig(`Registering suspend hook for task "${parsed.name}"`);
+      this.tasks[parsed.name].suspendHook = task;
 
     }
     else {
@@ -334,7 +402,7 @@ export class Hammer {
 
           })
           .finally(resolve);
-          
+
         }));
 
       }
