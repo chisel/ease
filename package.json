@@ -1,0 +1,33 @@
+{
+  "name": "airhammer",
+  "version": "0.0.0",
+  "description": "Temporary solution for Chisel automation.",
+  "main": "dist/app.js",
+  "scripts": {
+    "postinstall": "npx tsc",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/ramtinsoltani/airhammer.git"
+  },
+  "author": "Ramtin Soltani <ramtin@chiselpowered.com>",
+  "license": "UNLICENSED",
+  "bugs": {
+    "url": "https://github.com/ramtinsoltani/airhammer/issues"
+  },
+  "homepage": "https://github.com/ramtinsoltani/airhammer#readme",
+  "bin": {
+    "hammer": "./dist/app.js"
+  },
+  "dependencies": {
+    "chalk": "^2.4.2",
+    "commander": "^2.20.0",
+    "request": "^2.88.0",
+    "typescript": "^3.5.2"
+  },
+  "devDependencies": {
+    "@types/node": "^12.0.8",
+    "@types/request": "^2.48.1"
+  }
+}
