@@ -4,7 +4,7 @@
   "description": "Temporary solution for Chisel automation.",
   "main": "dist/app.js",
   "scripts": {
-    "postinstall": "npx tsc",
+    "build": "npx tsc",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -23,11 +23,13 @@
   "dependencies": {
     "chalk": "^2.4.2",
     "commander": "^2.20.0",
-    "request": "^2.88.0",
-    "typescript": "^3.5.2"
+    "fs-extra": "^8.0.1",
+    "request": "^2.88.0"
   },
   "devDependencies": {
+    "@types/fs-extra": "^7.0.0",
     "@types/node": "^12.0.8",
-    "@types/request": "^2.48.1"
+    "@types/request": "^2.48.1",
+    "typescript": "^3.5.2"
   }
 }

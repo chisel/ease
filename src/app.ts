@@ -2,18 +2,30 @@
 
 import program from 'commander';
 import path from 'path';
+import { HammerConfig } from './app.model';
+import { Hammer } from './hammer';
 
-// Define options
+// Define CLI
 program
-  .option('-c, --config <path>', 'Path to the hammer config file');
-
-// Run
-program.parse(process.argv);
+  .version('1.0.0')
+  .usage('[options] <job>')
+  .option('-c, --config <path>', 'Path to the hammer config file')
+  .option('-v --verbose', 'Detailed console logs')
+  .parse(process.argv);
 
 // Set config path to default if not provided
-program.config = path.join(process.cwd(), program.config || 'hammerconfig.js');
+program.config = path.join(process.cwd(), program.config || 'hammer.js');
+
+if ( ! program.args.length ) throw new Error(`No job name provided!`);
 
 // Load the config
-const config: any = require(program.config);
+const config: HammerConfig = require(program.config);
 
-console.log(config);
+const hammer: Hammer = new Hammer(program.verbose);
+
+// Configure Hammer
+config(hammer);
+
+// Run the job
+hammer._execJob(program.args[0])
+.finally(() => process.exit());
