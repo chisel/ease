@@ -12,7 +12,7 @@
     "url": "git+ssh://git@github.com/ramtinsoltani/ease.git"
   },
   "author": "Ramtin Soltani <ramtin@chiselpowered.com>",
-  "license": "UNLICENSED",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/ramtinsoltani/ease/issues"
   },
