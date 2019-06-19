@@ -15,7 +15,7 @@ Air Hammer looks for a configuration file named `hammer.js` inside the current w
 ## Hammer Object API
 
   - `hammer.task(name, callback)`: Defines a task with the given name and calls the callback for performing the task. The call back should either return void (for synchronous execution) or return a void promise (for asynchronous execution). Callback will be called with two parameters: `jobName` which holds the current executing job name and either `suspend`, which is a function that suspends the current task from running (only available on the `:before` hook) or `error`, which is an error object (only available on the `:error` hook.)
-  - `hammer.job(name, tasks)`: Defines a job with the given name and a list of the tasks to execute in order.
+  - `hammer.job(name, tasks [,options])`: Defines a job with the given name and a list of the tasks to execute in order. An optional [Job Execution Options](#job-execution-options) object can be provided.
   - `hammer.hook(name, callback)`: Defines a job hook with a callback.
   - `hammer.suspend(jobName)`: Suspends a job by name.
   - `hammer.log(message)`: Logs a message which will be shown on the console and logged into `hammer.log` file.
@@ -33,7 +33,17 @@ The following hooks are available for all tasks which will be defined when appen
 
 Jobs have hooks identical to tasks, the only difference is the callback arguments in which the `jobName` is not provided.
 
-## Example Hammer Configuration
+## Job Execution Options
+
+The following properties are defined on the options object:
+
+  - `runImmediately`: A boolean property which indicates if job should be run immediately after the task manager is run (defaults to true).
+  - `schedule`: Namespace for schedule options.
+    - `recurrence`: A string enum (`daily`, `weekly`, and `monthly`) which indicates the recurrence of the job (required).
+    - `day`: A number which indicates the day of the recurrence (day of the week or day of the month). This is required if `recurrence` is either `weekly` or `monthly`.
+    - `time`: A string with `hh:mm` format which indicates the time at which the recurrence occurs (required).
+
+## Hammer Configuration Example
 
 ```js
 module.exports = hammer => {
@@ -98,6 +108,19 @@ Running `hammer test` will execute the following tasks:
   2. `async-task`
   3. `async-task:after` (suspends `test` job)
 
+## Scheduled Job Example
+
+```js
+module.exports = hammer => {
+
+  hammer.task('task1', () => hammer.log('Running task 1'));
+
+  // Schedule job to run every Monday at 5 in the afternoon
+  hammer.job('job1', ['task1'], { runImmediately: false, schedule: { recurrence: 'weekly', day: 1, time: '17:00' } });
+
+};
+```
+
 # CLI Options
 
 `hammer [options] <jobs>`
@@ -105,6 +128,9 @@ Running `hammer test` will execute the following tasks:
 Options:
   - `-v --verbose`: Displays detailed logs in the console.
   - `-c --config`: Override the default `hammer.js` file location.
+  - `-a --all`: Run all jobs defined in the hammer config file.
+  - `-h --help`: Show help.
+  - `--version`: Show hammer version.
 
 Example: `hammer job1 job2`
 

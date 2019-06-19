@@ -13,7 +13,28 @@ class Hammer {
         this._verbose = _verbose;
         this.jobs = {};
         this.tasks = {};
+        this.scheduledJobs = [];
+        this.clockActivated = false;
         fs_extra_1.default.ensureFileSync(path_1.default.join(os_1.default.homedir(), '.hammer', 'hammer.log'));
+    }
+    _getWeekDayName(day) {
+        return [
+            'Monday',
+            'Tuesday',
+            'Wednesday',
+            'Thursday',
+            'Friday',
+            'Saturday',
+            'Sunday'
+        ][day];
+    }
+    _getTimeLabel(time) {
+        const hour = +time.split(':')[0];
+        const minute = +time.split(':')[1];
+        return `${hour < 10 ? '0' : ''}${hour}:${minute < 10 ? '0' : ''}${minute}`;
+    }
+    _getDayLabel(day) {
+        return `${day}${Math.floor(day / 10) === 1 ? 'th' : ['st', 'nd', 'rd'][(day % 10) - 1] || 'th'}`;
     }
     _parseName(name) {
         const components = name.split(':');
@@ -42,13 +63,70 @@ class Hammer {
             console.log(chalk_1.default.bold.greenBright(`[CONFIG] ${message}`));
         this._logToFile(`[CONFIG] ${message}`);
     }
+    _validateJobOptions(options, jobName) {
+        if (options.schedule) {
+            const recurrenceWhitelist = [
+                'monthly',
+                'weekly',
+                'daily'
+            ];
+            // Recurrence is required
+            if (!options.schedule.recurrence) {
+                throw new Error(`Invalid job options on job "${jobName}"! "recurrence" is required.`);
+            }
+            // Recurrence must be valid
+            if (!recurrenceWhitelist.includes(options.schedule.recurrence.trim().toLowerCase())) {
+                throw new Error(`Invalid job options on job "${jobName}"! "recurrence" must be one of the following: ${recurrenceWhitelist.map(item => `"${item}"`).join(', ')}.`);
+            }
+            // Time is required
+            if (!options.schedule.time) {
+                throw new Error(`Invalid job options on job "${jobName}"! "time" is required.`);
+            }
+            // Time must be string
+            if (typeof options.schedule.time !== 'string') {
+                throw new Error(`Invalid job options on job "${jobName}"! "time" must be string.`);
+            }
+            // Time must be in hh:mm format
+            const hour = +options.schedule.time.split(':')[0];
+            const minute = +options.schedule.time.split(':')[1];
+            if (typeof hour !== 'number' || isNaN(hour) || typeof minute !== 'number' || isNaN(minute) || hour < 0 || hour > 23 || minute < 0 || minute > 59) {
+                throw new Error(`Invalid job options on job "${jobName}"! "time" has invalid format.`);
+            }
+            // Validate day if recurrence is not daily
+            if (options.schedule.recurrence.trim().toLowerCase() !== 'daily') {
+                // Day is required
+                if (!options.schedule.hasOwnProperty('day')) {
+                    throw new Error(`Invalid job options on job "${jobName}"! "day" is required when recurrence is not daily.`);
+                }
+                // Day must be a number
+                if (typeof options.schedule.day !== 'number') {
+                    throw new Error(`Invalid job options on job "${jobName}"! "day" must be a number.`);
+                }
+                // Day must be between 1-7 if recurrence is weekly
+                if (options.schedule.recurrence.trim().toLowerCase() === 'weekly' && (options.schedule.day < 1 || options.schedule.day > 7)) {
+                    throw new Error(`Invalid job options on job "${jobName}"! "day" must be between 1-7 when recurrence is weekly.`);
+                }
+                // Day must be between 1-31 if recurrence is monthly
+                if (options.schedule.recurrence.trim().toLowerCase() === 'mothly' && (options.schedule.day < 1 || options.schedule.day > 31)) {
+                    throw new Error(`Invalid job options on job "${jobName}"! "day" must be between 1-31 when recurrence is monthly.`);
+                }
+                // Show warning if day is between 29-31 with monthly recurrence
+                if (options.schedule.recurrence.trim().toLowerCase() === 'mothly' && options.schedule.day > 28) {
+                    this._logWarning(`Job "${jobName}" will not be executed on certain months since schedule day is "${options.schedule.day}"!`);
+                }
+            }
+        }
+        else if (!options.runImmediately) {
+            // Show warning when job is not scheduled and not running immediately
+            this._logWarning(`Job "${jobName}" will never run due to options!`);
+        }
+    }
     async _onTaskError(handler, taskName, jobName, error) {
         if (handler) {
             try {
                 await handler(jobName, error);
             }
             catch (error) {
-                this._logError(`An error has occurred on the error hook of task "${taskName}"\n${error}`);
                 throw new Error(`An error has occurred on the error hook of task "${taskName}"\n${error}`);
             }
         }
@@ -59,7 +137,6 @@ class Hammer {
                 await handler(error);
             }
             catch (error) {
-                this._logError(`An error has occurred on the error hook of job "${jobName}"\n${error}`);
                 throw new Error(`An error has occurred on the error hook of job "${jobName}"\n${error}`);
             }
         }
@@ -72,22 +149,11 @@ class Hammer {
                 await job.suspendHook();
             }
             catch (error) {
-                this._logError(`An error has occurred on the suspend hook of the job "${job.name}"!\n${error}`);
                 throw new Error(`An error has occurred on the suspend hook of the job "${job.name}"!\n${error}`);
             }
         }
     }
     async _execJob(jobName) {
-        // Check if job exists
-        if (!this.jobs[jobName]) {
-            this._logError(`Job "${jobName}" not found!`);
-            throw new Error(`Job "${jobName}" not found!`);
-        }
-        // Check if job has tasks
-        if (!this.jobs[jobName].tasks.length) {
-            this._logError(`Job "${jobName}" has no tasks!`);
-            throw new Error(`Job "${jobName}" has no tasks!`);
-        }
         const job = this.jobs[jobName];
         // Call job before if any
         if (job.beforeHook) {
@@ -96,7 +162,6 @@ class Hammer {
                 await job.beforeHook(() => job.suspended = true);
             }
             catch (error) {
-                this._logError(`An error has occurred on the before hook of the job "${jobName}"!\n${error}`);
                 throw new Error(`An error has occurred on the before hook of the job "${jobName}"!\n${error}`);
             }
         }
@@ -111,7 +176,6 @@ class Hammer {
             const task = this.tasks[taskName];
             // If task has no definition
             if (!task.runner) {
-                this._logError(`Task "${taskName}" does not have a definition!`);
                 await this._onTaskError(task.errorHook, taskName, jobName, new Error(`Task "${taskName}" does not have a definition!`));
                 throw new Error(`Task "${taskName}" does not have a definition!`);
             }
@@ -122,7 +186,6 @@ class Hammer {
                     await task.beforeHook(jobName, () => task.suspended = true);
                 }
                 catch (error) {
-                    this._logError(`An error has occurred on the before hook of the task "${taskName}"!\n${error}`);
                     await this._onTaskError(task.errorHook, taskName, jobName, error);
                     throw new Error(`An error has occurred on the before hook of the task "${taskName}"!\n${error}`);
                 }
@@ -141,7 +204,6 @@ class Hammer {
                         await task.suspendHook(jobName);
                     }
                     catch (error) {
-                        this._logError(`An error has occurred on the suspend hook of the task "${taskName}"!\n${error}`);
                         await this._onTaskError(task.errorHook, taskName, jobName, error);
                         throw new Error(`An error has occurred on the suspend hook of the task "${taskName}"!\n${error}`);
                     }
@@ -154,7 +216,6 @@ class Hammer {
                 await task.runner(jobName);
             }
             catch (error) {
-                this._logError(`An error has occurred on task "${taskName}"!\n${error}`);
                 await this._onTaskError(task.errorHook, taskName, jobName, error);
                 throw new Error(`An error has occurred on task "${taskName}"!\n${error}`);
             }
@@ -169,7 +230,6 @@ class Hammer {
                     await task.afterHook(jobName);
                 }
                 catch (error) {
-                    this._logError(`An error has occurred on the after hook of the task "${taskName}"!\n${error}`);
                     await this._onTaskError(task.errorHook, taskName, jobName, error);
                     throw new Error(`An error has occurred on the after hook of the task "${taskName}"!\n${error}`);
                 }
@@ -186,11 +246,55 @@ class Hammer {
                 await job.afterHook();
             }
             catch (error) {
-                this._logError(`An error has occurred on the after hook of the job "${jobName}"!\n${error}`);
                 throw new Error(`An error has occurred on the after hook of the job "${jobName}"!\n${error}`);
             }
         }
         this._log(`Job "${jobName}" was executed successfully.`);
+    }
+    _activateClock() {
+        this.clockActivated = true;
+        // Run every minute
+        setInterval(() => {
+            const date = new Date();
+            for (const jobName of this.scheduledJobs) {
+                const job = this.jobs[jobName];
+                const schedule = job.options.schedule;
+                const recurrence = schedule.recurrence.trim().toLowerCase();
+                const day = schedule.day;
+                const hour = +schedule.time.split(':')[0];
+                const minute = +schedule.time.split(':')[1];
+                if (
+                // If recurrence is daily and time is now
+                (recurrence === 'daily' && hour === date.getHours() && minute === date.getMinutes()) ||
+                    // If recurrence is weekly and day of week and time is now
+                    (recurrence === 'weekly' && day === date.getDay() && hour === date.getHours() && minute === date.getMinutes()) ||
+                    // If recurrence is monthly and day of month and time is now
+                    (recurrence === 'monthly' && day === date.getDate() && hour === date.getHours() && minute === date.getMinutes())) {
+                    // Execute job
+                    this._execJob(jobName)
+                        .catch(error => {
+                        this._logError(`Job "${jobName}" has failed due to an error:\n${error}`);
+                        // Run job error handler if any
+                        this._onJobError(job.errorHook, jobName, error)
+                            .catch(error => this._logError(error));
+                    });
+                }
+            }
+        }, 60000);
+    }
+    _scheduleJob(jobName) {
+        // Add the job to scheduled jobs
+        this.scheduledJobs.push(jobName);
+        // Activate the clock if it's inactive
+        if (!this.clockActivated)
+            this._activateClock();
+        const schedule = this.jobs[jobName].options.schedule;
+        if (schedule.recurrence.toLowerCase().trim() === 'daily')
+            this._logConfig(`Scheduled job "${jobName}" to recur daily at ${this._getTimeLabel(schedule.time)}`);
+        else if (schedule.recurrence.toLowerCase().trim() === 'weekly')
+            this._logConfig(`Scheduled job "${jobName}" to recur weekly on ${this._getWeekDayName(schedule.day)} at ${this._getTimeLabel(schedule.time)}`);
+        else if (schedule.recurrence.toLowerCase().trim() === 'monthly')
+            this._logConfig(`Scheduled job "${jobName}" to recur on ${this._getDayLabel(schedule.day)} of each month at ${this._getTimeLabel(schedule.time)}`);
     }
     task(name, task) {
         const parsed = this._parseName(name);
@@ -231,7 +335,7 @@ class Hammer {
             this.tasks[parsed.name].runner = task;
         }
     }
-    job(name, tasks) {
+    job(name, tasks, options) {
         const parsed = this._parseName(name);
         if (!tasks || !tasks.length) {
             this._logError(`Job "${parsed.name}" must have at least one task!`);
@@ -252,11 +356,13 @@ class Hammer {
             this.jobs[parsed.name] = {
                 name: parsed.name,
                 tasks: tasks,
-                suspended: false
+                suspended: false,
+                options: Object.assign({ runImmediately: true }, options || {})
             };
         }
         else {
             this.jobs[parsed.name].tasks = tasks;
+            this.jobs[parsed.name].options = Object.assign(this.jobs[parsed.name].options, options || {});
         }
     }
     hook(job, task) {
@@ -275,7 +381,8 @@ class Hammer {
             this.jobs[parsed.name] = {
                 name: parsed.name,
                 suspended: false,
-                tasks: []
+                tasks: [],
+                options: { runImmediately: true }
             };
         }
         if (parsed.hook === 'before') {
@@ -323,21 +430,50 @@ class Hammer {
             });
         });
     }
-    async _execJobs(jobNames) {
+    async _execJobs(jobNames, runAllJobs) {
+        if (runAllJobs)
+            jobNames = Object.keys(this.jobs);
+        // Validate and schedule the jobs
         for (const jobName of jobNames) {
+            // Check if job exists
+            if (!this.jobs[jobName]) {
+                this._logError(`Job "${jobName}" not found!`);
+                continue;
+            }
             try {
-                await this._execJob(jobName);
+                // Check if job has tasks
+                if (!this.jobs[jobName].tasks.length)
+                    throw new Error(`Job "${jobName}" has no tasks!`);
+                // Validate job options
+                this._validateJobOptions(this.jobs[jobName].options, jobName);
+                // Schedule the job if specified
+                if (this.jobs[jobName].options.schedule)
+                    this._scheduleJob(jobName);
+            }
+            catch (error) {
+                // Remove job
+                delete this.jobs[jobName];
+                this._logError(`Job "${jobName}" has failed due to an error:\n${error}`);
+            }
+        }
+        // Run the jobs immediately
+        for (const jobName in this.jobs) {
+            // Check if job exists
+            if (!this.jobs[jobName])
+                continue;
+            try {
+                // Run the job immediately if specified
+                if (this.jobs[jobName].options.runImmediately)
+                    await this._execJob(jobName);
             }
             catch (error) {
                 this._logError(`Job "${jobName}" has failed due to an error:\n${error}`);
-                const job = this.jobs[jobName];
-                if (job) {
-                    try {
-                        await this._onJobError(job.errorHook, jobName, error);
-                    }
-                    catch (error) {
-                        // Do nothing!
-                    }
+                // Run error handler if any
+                try {
+                    await this._onJobError(this.jobs[jobName].errorHook, jobName, error);
+                }
+                catch (error) {
+                    this._logError(error);
                 }
             }
         }

@@ -3,7 +3,7 @@ import { OptionsWithUri } from 'request';
 export interface Hammer {
 
   task: (name: string, task: GenericTaskRunner) => void;
-  job: (name: string, tasks: string[]) => void;
+  job: (name: string, tasks: string[], options?: JobExecutionOptions) => void;
   request: (options: OptionsWithUri) => Promise<any>;
   suspend: (job: string) => void;
   log: (message: string) => void;
@@ -40,11 +40,27 @@ export interface Job {
   afterHook?: GenericJobRunner;
   errorHook?: ErrorJobRunner;
   suspendHook?: GenericJobRunner;
+  options: JobExecutionOptions;
 
 }
 
 export interface Registry<T> {
 
   [name: string]: T;
+
+}
+
+export interface JobExecutionOptions {
+
+  runImmediately?: boolean;
+  schedule?: JobScheduleOptions;
+
+}
+
+export interface JobScheduleOptions {
+
+  recurrence: string;
+  day?: number;
+  time: string;
 
 }
