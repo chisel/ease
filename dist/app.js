@@ -6,24 +6,24 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const commander_1 = __importDefault(require("commander"));
 const path_1 = __importDefault(require("path"));
-const hammer_1 = require("./hammer");
+const ease_1 = require("./ease");
 // Define CLI
 commander_1.default
     .version('0.0.0', '--version')
     .usage('[options] <jobs>')
-    .option('-c, --config <path>', 'Path to the hammer config file')
-    .option('-v --verbose', 'Detailed console logs')
-    .option('-a --all', 'Run all jobs defined in the hammer config file')
+    .option('-c, --config <path>', 'path to the ease config file')
+    .option('-v --verbose', 'detailed console logs')
+    .option('-a --all', 'run all jobs defined in the ease config file')
     .parse(process.argv);
 // Set config path to default if not provided
-commander_1.default.config = path_1.default.join(process.cwd(), commander_1.default.config || 'hammer.js');
+commander_1.default.config = path_1.default.join(process.cwd(), commander_1.default.config || 'easeconfig.js');
 // If no job names are provided
 if (!commander_1.default.args.length && !commander_1.default.all)
     commander_1.default.help();
 // Load the config
 const config = require(commander_1.default.config);
-const hammer = new hammer_1.Hammer(commander_1.default.verbose);
-// Configure Hammer
-config(hammer);
+const ease = new ease_1.Ease(commander_1.default.verbose);
+// Configure Ease
+config(ease);
 // Run the jobs
-hammer._execJobs(commander_1.default.args, commander_1.default.all);
+ease._execJobs(commander_1.default.args, commander_1.default.all);

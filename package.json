@@ -1,7 +1,7 @@
 {
-  "name": "airhammer",
+  "name": "ease",
   "version": "0.0.0",
-  "description": "Temporary solution for Chisel automation.",
+  "description": "A minimal task runner with scheduling capabilities.",
   "main": "dist/app.js",
   "scripts": {
     "build": "npx tsc",
@@ -9,16 +9,16 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+ssh://git@github.com/ramtinsoltani/airhammer.git"
+    "url": "git+ssh://git@github.com/ramtinsoltani/ease.git"
   },
   "author": "Ramtin Soltani <ramtin@chiselpowered.com>",
   "license": "UNLICENSED",
   "bugs": {
-    "url": "https://github.com/ramtinsoltani/airhammer/issues"
+    "url": "https://github.com/ramtinsoltani/ease/issues"
   },
-  "homepage": "https://github.com/ramtinsoltani/airhammer#readme",
+  "homepage": "https://github.com/ramtinsoltani/ease#readme",
   "bin": {
-    "hammer": "./dist/app.js"
+    "ease": "./dist/app.js"
   },
   "dependencies": {
     "chalk": "^2.4.2",

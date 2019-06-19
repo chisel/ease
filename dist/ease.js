@@ -8,15 +8,15 @@ const fs_extra_1 = __importDefault(require("fs-extra"));
 const os_1 = __importDefault(require("os"));
 const chalk_1 = __importDefault(require("chalk"));
 const request_1 = __importDefault(require("request"));
-class Hammer {
+class Ease {
     constructor(_verbose) {
         this._verbose = _verbose;
         this.jobs = {};
         this.tasks = {};
-        this.scheduledJobs = [];
+        this.scheduledJobs = {};
         this.clockActivated = false;
-        this.activeJobs = [];
-        fs_extra_1.default.ensureFileSync(path_1.default.join(os_1.default.homedir(), '.hammer', 'hammer.log'));
+        this.activeJobs = {};
+        fs_extra_1.default.ensureFileSync(path_1.default.join(os_1.default.homedir(), '.ease', 'ease.log'));
     }
     _getWeekDayName(day) {
         return [
@@ -45,7 +45,7 @@ class Hammer {
         };
     }
     _logToFile(message) {
-        fs_extra_1.default.appendFileSync(path_1.default.join(os_1.default.homedir(), '.hammer', 'hammer.log'), message + '\n');
+        fs_extra_1.default.appendFileSync(path_1.default.join(os_1.default.homedir(), '.ease', 'ease.log'), message + '\n');
     }
     _log(message) {
         console.log(`[LOG] ${message}`);
@@ -117,10 +117,6 @@ class Hammer {
                 }
             }
         }
-        else if (!options.runImmediately) {
-            // Show warning when job is not scheduled and not running immediately
-            this._logWarning(`Job "${jobName}" will never run due to options!`);
-        }
     }
     async _onTaskError(handler, taskName, jobName, error) {
         if (handler) {
@@ -145,7 +141,7 @@ class Hammer {
     async _onJobSuspend(job) {
         this._logWarning(`Job "${job.name}" was suspended!`);
         // Remove from active jobs
-        this.activeJobs.splice(this.activeJobs.findIndex(name => name === job.name), 1);
+        delete this.activeJobs[job.name];
         if (job.suspendHook) {
             this._log(`Running suspend hook of job "${job.name}"...`);
             try {
@@ -159,7 +155,7 @@ class Hammer {
     async _execJob(jobName) {
         const job = this.jobs[jobName];
         // Add to active jobs
-        this.activeJobs.push(job.name);
+        this.activeJobs[job.name] = true;
         try {
             // Call job before if any
             if (job.beforeHook) {
@@ -258,19 +254,19 @@ class Hammer {
         }
         catch (error) {
             // Remove from active jobs
-            this.activeJobs.splice(this.activeJobs.findIndex(name => name === job.name), 1);
+            delete this.activeJobs[job.name];
             throw error;
         }
         // Remove from active jobs
-        this.activeJobs.splice(this.activeJobs.findIndex(name => name === job.name), 1);
-        this._log(`Job "${jobName}" was executed successfully.`);
+        delete this.activeJobs[job.name];
+        this._log(`Job "${jobName}" was executed.`);
     }
     _activateClock() {
         this.clockActivated = true;
         // Run every minute
         setInterval(() => {
             const date = new Date();
-            for (const jobName of this.scheduledJobs) {
+            for (const jobName of Object.keys(this.scheduledJobs)) {
                 const job = this.jobs[jobName];
                 const schedule = job.options.schedule;
                 const recurrence = schedule.recurrence.trim().toLowerCase();
@@ -303,7 +299,7 @@ class Hammer {
     }
     _scheduleJob(jobName) {
         // Add the job to scheduled jobs
-        this.scheduledJobs.push(jobName);
+        this.scheduledJobs[jobName] = true;
         // Activate the clock if it's inactive
         if (!this.clockActivated)
             this._activateClock();
@@ -356,21 +352,27 @@ class Hammer {
     }
     job(name, tasks, options) {
         const parsed = this._parseName(name);
-        if (!tasks || !tasks.length) {
+        if ((!tasks || !tasks.length) && !this.jobs[parsed.name]) {
             this._logError(`Job "${parsed.name}" must have at least one task!`);
             throw new Error(`Job "${parsed.name}" must have at least one task!`);
         }
-        for (const taskName of tasks) {
-            if (!this.tasks[taskName]) {
-                this._logError(`Task "${taskName}" not found!`);
-                throw new Error(`Task "${taskName}" not found!`);
-            }
-            if (!this.tasks[taskName].runner) {
-                this._logError(`Task "${taskName}" does not have a definition!`);
-                throw new Error(`Task "${taskName}" does not have a definition!`);
+        if (tasks) {
+            for (const taskName of tasks) {
+                if (!this.tasks[taskName]) {
+                    this._logError(`Task "${taskName}" not found!`);
+                    throw new Error(`Task "${taskName}" not found!`);
+                }
+                if (!this.tasks[taskName].runner) {
+                    this._logError(`Task "${taskName}" does not have a definition!`);
+                    throw new Error(`Task "${taskName}" does not have a definition!`);
+                }
             }
         }
-        this._logConfig(`Registering job "${parsed.name}" with tasks ${tasks.map(task => `"${task}"`).join(', ')}`);
+        if (options) {
+            // Validate job options
+            this._validateJobOptions(options, parsed.name);
+        }
+        this._logConfig(`Registering job "${parsed.name}"${tasks ? ` with tasks ${tasks.map(task => `"${task}"`).join(', ')}` : ''}`);
         if (!this.jobs[parsed.name]) {
             this.jobs[parsed.name] = {
                 name: parsed.name,
@@ -380,9 +382,19 @@ class Hammer {
             };
         }
         else {
-            this.jobs[parsed.name].tasks = tasks;
-            this.jobs[parsed.name].options = Object.assign(this.jobs[parsed.name].options, options || {});
+            this.jobs[parsed.name].tasks = tasks || this.jobs[parsed.name].tasks;
+            this.jobs[parsed.name].options = options ? Object.assign({ runImmediately: true }, options) : this.jobs[parsed.name].options;
         }
+        // Schedule the job if specified
+        if (this.jobs[parsed.name].options.schedule)
+            this._scheduleJob(parsed.name);
+        else {
+            this._logConfig(`Removed scheduled job "${parsed.name}"`);
+            delete this.scheduledJobs[parsed.name];
+        }
+        // Show warning when job is not scheduled and not running immediately
+        if (!this.jobs[parsed.name].options.runImmediately && !this.jobs[parsed.name].options.schedule)
+            this._logWarning(`Job "${parsed.name}" will never run due to options!`);
     }
     hook(job, task) {
         const parsed = this._parseName(job);
@@ -431,7 +443,7 @@ class Hammer {
             throw new Error(`Cannot suspend job "${jobName}" because it doesn't exist!`);
         }
         // If job is not active show warning
-        if (this.activeJobs.findIndex(name => name === jobName) === -1)
+        if (!this.activeJobs.hasOwnProperty(jobName))
             this._logWarning(`Job "${jobName}" cannot be suspended because it's inactive!`);
         else
             this.jobs[jobName].suspended = true;
@@ -457,30 +469,15 @@ class Hammer {
         if (runAllJobs)
             jobNames = Object.keys(this.jobs);
         const validJobs = [];
-        // Validate and schedule the jobs
+        // Validate jobs
         for (const jobName of jobNames) {
             // Check if job exists
             if (!this.jobs[jobName]) {
                 this._logError(`Job "${jobName}" not found!`);
                 continue;
             }
-            try {
-                // Check if job has tasks
-                if (!this.jobs[jobName].tasks.length)
-                    throw new Error(`Job "${jobName}" has no tasks!`);
-                // Validate job options
-                this._validateJobOptions(this.jobs[jobName].options, jobName);
-                // Schedule the job if specified
-                if (this.jobs[jobName].options.schedule)
-                    this._scheduleJob(jobName);
-                // Add to valid jobs
-                validJobs.push(jobName);
-            }
-            catch (error) {
-                // Remove job
-                delete this.jobs[jobName];
-                this._logError(`Job "${jobName}" has failed due to an error:\n${error}`);
-            }
+            // Add to valid jobs
+            validJobs.push(jobName);
         }
         // Run the jobs immediately
         for (const jobName of validJobs) {
@@ -502,4 +499,4 @@ class Hammer {
         }
     }
 }
-exports.Hammer = Hammer;
+exports.Ease = Ease;

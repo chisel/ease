@@ -2,31 +2,31 @@
 
 import program from 'commander';
 import path from 'path';
-import { HammerConfig } from './app.model';
-import { Hammer } from './hammer';
+import { EaseConfig } from './app.model';
+import { Ease } from './ease';
 
 // Define CLI
 program
   .version('0.0.0', '--version')
   .usage('[options] <jobs>')
-  .option('-c, --config <path>', 'Path to the hammer config file')
-  .option('-v --verbose', 'Detailed console logs')
-  .option('-a --all', 'Run all jobs defined in the hammer config file')
+  .option('-c, --config <path>', 'path to the ease config file')
+  .option('-v --verbose', 'detailed console logs')
+  .option('-a --all', 'run all jobs defined in the ease config file')
   .parse(process.argv);
 
 // Set config path to default if not provided
-program.config = path.join(process.cwd(), program.config || 'hammer.js');
+program.config = path.join(process.cwd(), program.config || 'easeconfig.js');
 
 // If no job names are provided
 if ( ! program.args.length && ! program.all ) program.help();
 
 // Load the config
-const config: HammerConfig = require(program.config);
+const config: EaseConfig = require(program.config);
 
-const hammer: Hammer = new Hammer(program.verbose);
+const ease: Ease = new Ease(program.verbose);
 
-// Configure Hammer
-config(hammer);
+// Configure Ease
+config(ease);
 
 // Run the jobs
-hammer._execJobs(program.args, program.all);
+ease._execJobs(program.args, program.all);
