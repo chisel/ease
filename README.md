@@ -134,6 +134,10 @@ Options:
 
 Example: `hammer job1 job2`
 
+# Logs
+
+Logs are stored at `~/.hammer/hammer.log` (or `%userprofile%\.hammer\hammer.log` on Windows).
+
 # Building
 
 Run `npm run build` to build the source into the `dist` directory.

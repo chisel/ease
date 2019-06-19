@@ -79,29 +79,29 @@ export class Hammer {
 
   private _log(message: string): void {
 
-    console.log(`[HAMMER] ${message}`);
-    this._logToFile(`[HAMMER] ${message}`);
+    console.log(`[LOG] ${message}`);
+    this._logToFile(`[${(new Date()).toISOString()}] [LOG] ${message}`);
 
   }
 
   private _logError(message: string): void {
 
     console.log(chalk.bold.redBright(`[ERROR] ${message}`));
-    this._logToFile(`[ERROR] ${message}`);
+    this._logToFile(`[${(new Date()).toISOString()}] [ERROR] ${message}`);
 
   }
 
   private _logWarning(message: string): void {
 
     console.log(chalk.bold.yellowBright(`[WARNING] ${message}`));
-    this._logToFile(`[WARNING] ${message}`);
+    this._logToFile(`[${(new Date()).toISOString()}] [WARNING] ${message}`);
 
   }
 
   private _logConfig(message: string): void {
 
     if ( this._verbose ) console.log(chalk.bold.greenBright(`[CONFIG] ${message}`));
-    this._logToFile(`[CONFIG] ${message}`);
+    this._logToFile(`[${(new Date()).toISOString()}] [CONFIG] ${message}`);
 
   }
 
@@ -711,9 +711,9 @@ export class Hammer {
 
   public log(message: string): void {
 
-    console.log(chalk.cyanBright(`[LOG] ${message}`));
+    console.log(chalk.cyanBright(`[TASK] ${message}`));
 
-    this._logToFile(`[LOG] ${message}`);
+    this._logToFile(`[${(new Date()).toISOString()}] [TASK] ${message}`);
 
   }
 

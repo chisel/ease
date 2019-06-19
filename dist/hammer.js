@@ -48,21 +48,21 @@ class Hammer {
         fs_extra_1.default.appendFileSync(path_1.default.join(os_1.default.homedir(), '.hammer', 'hammer.log'), message + '\n');
     }
     _log(message) {
-        console.log(`[HAMMER] ${message}`);
-        this._logToFile(`[HAMMER] ${message}`);
+        console.log(`[LOG] ${message}`);
+        this._logToFile(`[${(new Date()).toISOString()}] [LOG] ${message}`);
     }
     _logError(message) {
         console.log(chalk_1.default.bold.redBright(`[ERROR] ${message}`));
-        this._logToFile(`[ERROR] ${message}`);
+        this._logToFile(`[${(new Date()).toISOString()}] [ERROR] ${message}`);
     }
     _logWarning(message) {
         console.log(chalk_1.default.bold.yellowBright(`[WARNING] ${message}`));
-        this._logToFile(`[WARNING] ${message}`);
+        this._logToFile(`[${(new Date()).toISOString()}] [WARNING] ${message}`);
     }
     _logConfig(message) {
         if (this._verbose)
             console.log(chalk_1.default.bold.greenBright(`[CONFIG] ${message}`));
-        this._logToFile(`[CONFIG] ${message}`);
+        this._logToFile(`[${(new Date()).toISOString()}] [CONFIG] ${message}`);
     }
     _validateJobOptions(options, jobName) {
         if (options.schedule) {
@@ -422,8 +422,8 @@ class Hammer {
         }
     }
     log(message) {
-        console.log(chalk_1.default.cyanBright(`[LOG] ${message}`));
-        this._logToFile(`[LOG] ${message}`);
+        console.log(chalk_1.default.cyanBright(`[TASK] ${message}`));
+        this._logToFile(`[${(new Date()).toISOString()}] [TASK] ${message}`);
     }
     suspend(jobName) {
         if (!this.jobs[jobName]) {
