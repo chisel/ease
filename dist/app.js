@@ -9,7 +9,7 @@ const path_1 = __importDefault(require("path"));
 const hammer_1 = require("./hammer");
 // Define CLI
 commander_1.default
-    .version('1.0.0', '--version')
+    .version('0.0.0', '--version')
     .usage('[options] <jobs>')
     .option('-c, --config <path>', 'Path to the hammer config file')
     .option('-v --verbose', 'Detailed console logs')

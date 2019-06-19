@@ -7,7 +7,7 @@ import { Hammer } from './hammer';
 
 // Define CLI
 program
-  .version('1.0.0', '--version')
+  .version('0.0.0', '--version')
   .usage('[options] <jobs>')
   .option('-c, --config <path>', 'Path to the hammer config file')
   .option('-v --verbose', 'Detailed console logs')

@@ -270,6 +270,11 @@ class Hammer {
                     (recurrence === 'weekly' && day === date.getDay() && hour === date.getHours() && minute === date.getMinutes()) ||
                     // If recurrence is monthly and day of month and time is now
                     (recurrence === 'monthly' && day === date.getDate() && hour === date.getHours() && minute === date.getMinutes())) {
+                    // Reset all suspensions
+                    job.suspended = false;
+                    for (const taskName of job.tasks) {
+                        this.tasks[taskName].suspended = false;
+                    }
                     // Execute job
                     this._execJob(jobName)
                         .catch(error => {

@@ -1,6 +1,6 @@
 # Air Hammer
 
-Air Hammer is a minimal task runner made for RESTful APIs. It is built as a temporary solution for Chisel Data Integration Platform task management and automation.
+Air Hammer is a minimal task runner with scheduling capabilities.
 
 # Installation
 
@@ -14,12 +14,12 @@ Air Hammer looks for a configuration file named `hammer.js` inside the current w
 
 ## Hammer Object API
 
-  - `hammer.task(name, callback)`: Defines a task with the given name and calls the callback for performing the task. The call back should either return void (for synchronous execution) or return a void promise (for asynchronous execution). Callback will be called with two parameters: `jobName` which holds the current executing job name and either `suspend`, which is a function that suspends the current task from running (only available on the `:before` hook) or `error`, which is an error object (only available on the `:error` hook.)
+  - `hammer.task(name, callback)`: Defines a task with the given name and calls the callback for performing the task. The call back should either return void (for synchronous execution) or return a void promise (for asynchronous execution). Callback will be called with two parameters: `jobName` which holds the current executing job name and either `suspend`, which is a function that suspends the current task from running (only available on the `:before` hook) or `error` which is an error object (only available on the `:error` hook.)
   - `hammer.job(name, tasks [,options])`: Defines a job with the given name and a list of the tasks to execute in order. An optional [Job Execution Options](#job-execution-options) object can be provided.
   - `hammer.hook(name, callback)`: Defines a job hook with a callback.
   - `hammer.suspend(jobName)`: Suspends a job by name.
   - `hammer.log(message)`: Logs a message which will be shown on the console and logged into `hammer.log` file.
-  - `hammer.request(options)`: Sends a request using the given [options](https://www.npmjs.com/package/request#requestoptions-callback) and returns a promise with the response (the body of the response will be parsed to JSON if the correct headers are set by the target.)
+  - `hammer.request(options)`: Sends an HTTP request using the given [options](https://www.npmjs.com/package/request#requestoptions-callback) and returns a promise with the response (the body of the response will be parsed to JSON if `content-type` header is set to `application/json` by the target.)
 
 ## Task Hooks
 

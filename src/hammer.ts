@@ -470,6 +470,15 @@ export class Hammer {
           (recurrence === 'monthly' && day === date.getDate() && hour === date.getHours() && minute === date.getMinutes())
         ) {
 
+          // Reset all suspensions
+          job.suspended = false;
+
+          for ( const taskName of job.tasks ) {
+
+            this.tasks[taskName].suspended = false;
+
+          }
+
           // Execute job
           this._execJob(jobName)
           .catch(error => {
