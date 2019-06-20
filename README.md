@@ -18,6 +18,7 @@ Ease looks for a configuration file named `easeconfig.js` inside the current wor
   - `ease.job(name, tasks [,options])`: Defines a job with the given name and a list of the tasks to execute in order. An optional [Job Execution Options](#job-execution-options) object can be provided.
   - `ease.hook(name, callback)`: Defines a job hook with a callback.
   - `ease.suspend(jobName)`: Suspends a job by name.
+  - `ease.info(jobName)`: Returns an object with members `tasks` and `options` which are a list of the registered tasks and the options of the job. This info can help dynamically redefining jobs.
   - `ease.log(message)`: Logs a message which will be shown on the console and logged into `ease.log` file.
   - `ease.request(options)`: Sends an HTTP request using the given [options](https://www.npmjs.com/package/request#requestoptions-callback) and returns a promise with the response (the body of the response will be parsed to JSON if `content-type` header is set to `application/json` by the target.)
 
@@ -128,6 +129,8 @@ Jobs can be redefined dynamically from within tasks. This can be achieved by cal
 > If a job already exists, calling `ease.job()` the second time doesn't require the tasks array. This can be used to reschedule a job without affecting it's registered tasks. Example: `ease.job('job1', null, { schedule: {...} })`.
 
 > You can remove a scheduled job by running `ease.job('job1', null, { schedule: null })` on an existing job.
+
+> You can register new tasks dynamically using `ease.job('job1', ease.info('job1').tasks.concat('new-task'))`.
 
 # CLI Options
 

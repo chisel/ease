@@ -8,6 +8,7 @@ export interface Ease {
   suspend: (job: string) => void;
   log: (message: string) => void;
   hook: (job: string, task: GenericJobRunner) => void;
+  info: (job: string) => JobInfo;
 
 }
 
@@ -18,6 +19,13 @@ export type ErrorTaskRunner = (jobName: string, error: Error) => Promise<void>|v
 export type GenericJobRunner = () => Promise<void>|void;
 export type BeforeJobRunner = (suspend: () => void) => Promise<void>|void;
 export type ErrorJobRunner = (error: Error) => Promise<void>|void;
+
+export interface JobInfo {
+
+  tasks: string[];
+  options: JobExecutionOptions;
+
+}
 
 export interface Task {
 

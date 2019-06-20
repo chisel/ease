@@ -8,6 +8,7 @@ const fs_extra_1 = __importDefault(require("fs-extra"));
 const os_1 = __importDefault(require("os"));
 const chalk_1 = __importDefault(require("chalk"));
 const request_1 = __importDefault(require("request"));
+const lodash_1 = __importDefault(require("lodash"));
 class Ease {
     constructor(_verbose) {
         this._verbose = _verbose;
@@ -266,7 +267,7 @@ class Ease {
         // Run every minute
         setInterval(() => {
             const date = new Date();
-            for (const jobName of Object.keys(this.scheduledJobs)) {
+            for (const jobName of lodash_1.default.keys(this.scheduledJobs)) {
                 const job = this.jobs[jobName];
                 const schedule = job.options.schedule;
                 const recurrence = schedule.recurrence.trim().toLowerCase();
@@ -378,12 +379,12 @@ class Ease {
                 name: parsed.name,
                 tasks: tasks,
                 suspended: false,
-                options: Object.assign({ runImmediately: true }, options || {})
+                options: lodash_1.default.assign({ runImmediately: true }, options || {})
             };
         }
         else {
             this.jobs[parsed.name].tasks = tasks || this.jobs[parsed.name].tasks;
-            this.jobs[parsed.name].options = options ? Object.assign({ runImmediately: true }, options) : this.jobs[parsed.name].options;
+            this.jobs[parsed.name].options = options ? lodash_1.default.assign({ runImmediately: true }, options) : this.jobs[parsed.name].options;
         }
         // Schedule the job if specified
         if (this.jobs[parsed.name].options.schedule)
@@ -434,6 +435,14 @@ class Ease {
             this.jobs[parsed.name].suspendHook = task;
         }
     }
+    info(job) {
+        if (!this.jobs[job])
+            throw new Error(`Job "${job}" not found!`);
+        return {
+            tasks: lodash_1.default.clone(this.jobs[job].tasks),
+            options: lodash_1.default.cloneDeep(this.jobs[job].options)
+        };
+    }
     log(message) {
         console.log(chalk_1.default.cyanBright(`[TASK] ${message}`));
         this._logToFile(`[${(new Date()).toISOString()}] [TASK] ${message}`);
@@ -468,7 +477,7 @@ class Ease {
     }
     async _execJobs(jobNames, runAllJobs) {
         if (runAllJobs)
-            jobNames = Object.keys(this.jobs);
+            jobNames = lodash_1.default.keys(this.jobs);
         const validJobs = [];
         // Validate jobs
         for (const jobName of jobNames) {

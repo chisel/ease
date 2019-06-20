@@ -7,13 +7,15 @@ import {
   ErrorJobRunner,
   GenericJobRunner,
   JobExecutionOptions,
-  JobScheduleOptions
+  JobScheduleOptions,
+  JobInfo
 } from './app.model';
 import path from 'path';
 import fs from 'fs-extra';
 import os from 'os';
 import chalk from 'chalk';
 import request from 'request';
+import _ from 'lodash';
 
 export class Ease {
 
@@ -468,7 +470,7 @@ export class Ease {
 
       const date = new Date();
 
-      for ( const jobName of Object.keys(this.scheduledJobs) ) {
+      for ( const jobName of _.keys(this.scheduledJobs) ) {
 
         const job = this.jobs[jobName];
         const schedule = <JobScheduleOptions>job.options.schedule;
@@ -645,14 +647,14 @@ export class Ease {
         name: parsed.name,
         tasks: tasks,
         suspended: false,
-        options: Object.assign({ runImmediately: true }, options || {})
+        options: _.assign({ runImmediately: true }, options || {})
       };
 
     }
     else {
 
       this.jobs[parsed.name].tasks = tasks || this.jobs[parsed.name].tasks;
-      this.jobs[parsed.name].options = options ? Object.assign({ runImmediately: true }, options) : this.jobs[parsed.name].options;
+      this.jobs[parsed.name].options = options ? _.assign({ runImmediately: true }, options) : this.jobs[parsed.name].options;
 
     }
 
@@ -728,6 +730,17 @@ export class Ease {
 
   }
 
+  public info(job: string): JobInfo {
+
+    if ( ! this.jobs[job] ) throw new Error(`Job "${job}" not found!`);
+
+    return {
+      tasks: _.clone(this.jobs[job].tasks),
+      options: _.cloneDeep(this.jobs[job].options)
+    };
+
+  }
+
   public log(message: string): void {
 
     console.log(chalk.cyanBright(`[TASK] ${message}`));
@@ -787,7 +800,7 @@ export class Ease {
 
   public async _execJobs(jobNames: string[], runAllJobs: boolean) {
 
-    if ( runAllJobs ) jobNames = Object.keys(this.jobs);
+    if ( runAllJobs ) jobNames = _.keys(this.jobs);
 
     const validJobs: string[] = [];
 
