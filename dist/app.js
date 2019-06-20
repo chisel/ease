@@ -9,7 +9,7 @@ const path_1 = __importDefault(require("path"));
 const ease_1 = require("./ease");
 // Define CLI
 commander_1.default
-    .version('1.0.0', '--version')
+    .version('1.0.3', '--version')
     .usage('[options] <jobs>')
     .option('-c, --config <path>', 'path to the ease config file')
     .option('-v --verbose', 'detailed console logs')
