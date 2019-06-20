@@ -7,7 +7,7 @@ import { Ease } from './ease';
 
 // Define CLI
 program
-  .version('1.0.0', '--version')
+  .version('1.0.3', '--version')
   .usage('[options] <jobs>')
   .option('-c, --config <path>', 'path to the ease config file')
   .option('-v --verbose', 'detailed console logs')

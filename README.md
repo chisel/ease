@@ -12,6 +12,14 @@ Ease is a minimal task runner with scheduling capabilities designed to be flexib
 
 Ease looks for a configuration file named `easeconfig.js` inside the current working directory for task and job definitions. The configuration file must export a function which accepts the `ease` object as its parameter, which can be used to define tasks, jobs, schedules, etc.
 
+```js
+module.exports = ease => {
+
+  // Use the ease object here
+
+};
+```
+
 ## Ease Object API
 
   - `ease.task(name, callback)`: Defines a task with the given name and calls the callback for performing the task. The call back should either return void (for synchronous execution) or return a void promise (for asynchronous execution). Callback will be called with two parameters: `jobName` which holds the current executing job name and either `suspend`, which is a function that suspends the current task from running (only available on the `:before` hook) or `error` which is an error object (only available on the `:error` hook.)
@@ -30,9 +38,45 @@ The following hooks are available for all tasks which will be defined when appen
   - `:suspend`: Runs after the task was suspended. Can be asynchronous if the callback returns a promise.
   - `:error`: Runs after an error has occurred in the task or any of its hooks. Can be asynchronous if the callback returns a promise.
 
+```js
+module.exports = ease => {
+
+  ease.task('foo:before', (jobName, suspend) => {
+
+    ease.log('Running before task foo...');
+
+  });
+
+  ease.task('foo', jobName => {
+
+    // Do stuff
+
+  });
+
+  ease.task('foo:error', (jobName, error) => {
+
+    ease.log('Task foo has failed:\n' + error);
+
+  });
+
+};
+```
+
 ## Job Hooks
 
-Jobs have hooks identical to tasks, the only difference is the callback arguments in which the `jobName` is not provided.
+Jobs have hooks identical to tasks and are defined using the `ease.hook()` method, the only difference is the callback arguments in which the `jobName` is not provided.
+
+```js
+module.exports = ease => {
+
+  ease.task('foo', jobName => ease.log('Running foo...'));
+
+  ease.job('job1', ['foo']);
+
+  ease.hook('job1:after', () => ease.log('Job1 has finished.'));
+
+};
+```
 
 ## Job Execution Options
 
@@ -42,7 +86,7 @@ The following properties are defined on the options object:
   - `schedule`: Namespace for schedule options.
     - `recurrence`: A string enum (`daily`, `weekly`, and `monthly`) which indicates the recurrence of the job (required).
     - `day`: A number which indicates the day of the recurrence (day of the week or day of the month). This is required if `recurrence` is either `weekly` or `monthly`.
-    - `time`: A string with `hh:mm` format which indicates the time at which the recurrence occurs (required).
+    - `time`: A string with `hh:mm:ss` format which indicates the time at which the recurrence occurs (required).
 
 ## Ease Configuration Example
 
@@ -117,20 +161,48 @@ module.exports = ease => {
   ease.task('task1', () => ease.log('Running task 1'));
 
   // Schedule job to run every Monday at 5 in the afternoon
-  ease.job('job1', ['task1'], { runImmediately: false, schedule: { recurrence: 'weekly', day: 1, time: '17:00' } });
+  ease.job('job1', ['task1'], {
+    runImmediately: false,
+    schedule: {
+      recurrence: 'weekly',
+      day: 1,
+      time: '17:00:00'
+    }
+  });
 
 };
 ```
 
 ## Redefining Jobs
 
-Jobs can be redefined dynamically from within tasks. This can be achieved by calling `ease.job()` again which would allow redefining the tasks or the schedule.
+Jobs can be redefined dynamically from within tasks. This can be achieved by calling `ease.job()` again which would allow redefining the tasks or the schedule for a job.
 
 > If a job already exists, calling `ease.job()` the second time doesn't require the tasks array. This can be used to reschedule a job without affecting it's registered tasks. Example: `ease.job('job1', null, { schedule: {...} })`.
 
 > You can remove a scheduled job by running `ease.job('job1', null, { schedule: null })` on an existing job.
 
 > You can register new tasks dynamically using `ease.job('job1', ease.info('job1').tasks.concat('new-task'))`.
+
+> You can define tasks dynamically, but jobs that are dynamically defined won't run unless scheduled. If you need to run a dynamically defined job right away, you can schedule it to be run the next second and then remove its schedule on the job's after hook.
+
+```js
+module.exports = ease => {
+
+  ease.task('foo', () => ease.log('Running task foo'));
+  ease.task('bar', () => ease.log('Running task bar'));
+
+  // Defining job "job1" with task "foo"
+  ease.job('job1', ['foo']);
+
+  // Dynamically adding task "bar" to job "job1" using a before hook
+  ease.hook('job1:before', () => {
+
+    ease.job('job1', ease.info('job1').tasks.concat('bar'));
+
+  });
+
+};
+```
 
 # CLI Options
 

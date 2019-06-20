@@ -24,6 +24,7 @@ export class Ease {
   private scheduledJobs: Registry<boolean> = {};
   private clockActivated: boolean = false;
   private activeJobs: Registry<boolean> = {};
+  private clock: any = null;
 
   constructor(
     private _verbose: boolean
@@ -51,8 +52,9 @@ export class Ease {
 
     const hour = +time.split(':')[0];
     const minute = +time.split(':')[1];
+    const seconds = +time.split(':')[2];
 
-    return `${hour < 10 ? '0' : ''}${hour}:${minute < 10 ? '0' : ''}${minute}`;
+    return `${hour < 10 ? '0' : ''}${hour}:${minute < 10 ? '0' : ''}${minute}:${seconds < 10 ? '0' : ''}${seconds}`;
 
   }
 
@@ -145,11 +147,15 @@ export class Ease {
 
       }
 
-      // Time must be in hh:mm format
+      // Time must be in hh:mm:ss format
       const hour: number = +options.schedule.time.split(':')[0];
       const minute: number = +options.schedule.time.split(':')[1];
+      const second: number = +options.schedule.time.split(':')[2];
 
-      if ( typeof hour !== 'number' || isNaN(hour) || typeof minute !== 'number' || isNaN(minute) || hour < 0 || hour > 23 || minute < 0 || minute > 59 ) {
+      if (
+        typeof hour !== 'number' || isNaN(hour) || typeof minute !== 'number' || isNaN(minute) || typeof second !== 'number' || isNaN(second) ||
+        hour < 0 || hour > 23 || minute < 0 || minute > 59 || second < 0 || second > 59
+      ) {
 
         throw new Error(`Invalid job options on job "${jobName}"! "time" has invalid format.`);
 
@@ -466,7 +472,7 @@ export class Ease {
     this.clockActivated = true;
 
     // Run every minute
-    setInterval(() => {
+    this.clock = setInterval(() => {
 
       const date = new Date();
 
@@ -478,14 +484,15 @@ export class Ease {
         const day = schedule.day;
         const hour = +schedule.time.split(':')[0];
         const minute = +schedule.time.split(':')[1];
+        const second = +schedule.time.split(':')[2];
 
         if (
           // If recurrence is daily and time is now
-          (recurrence === 'daily' && hour === date.getHours() && minute === date.getMinutes()) ||
+          (recurrence === 'daily' && hour === date.getHours() && minute === date.getMinutes() && second === date.getSeconds()) ||
           // If recurrence is weekly and day of week and time is now
-          (recurrence === 'weekly' && day === date.getDay() && hour === date.getHours() && minute === date.getMinutes()) ||
+          (recurrence === 'weekly' && day === date.getDay() && hour === date.getHours() && minute === date.getMinutes() && second === date.getSeconds()) ||
           // If recurrence is monthly and day of month and time is now
-          (recurrence === 'monthly' && day === date.getDate() && hour === date.getHours() && minute === date.getMinutes())
+          (recurrence === 'monthly' && day === date.getDate() && hour === date.getHours() && minute === date.getMinutes() && second === date.getSeconds())
         ) {
 
           // Reset all suspensions
@@ -513,7 +520,7 @@ export class Ease {
 
       }
 
-    }, 60000);
+    }, 1000);
 
   }
 
@@ -639,9 +646,9 @@ export class Ease {
 
     }
 
-    this._logConfig(`Registering job "${parsed.name}"${ tasks ? ` with tasks ${tasks.map(task => `"${task}"`).join(', ')}` : ''}`);
-
     if ( ! this.jobs[parsed.name] ) {
+
+      this._logConfig(`Registering job "${parsed.name}"${ tasks ? ` with tasks ${tasks.map(task => `"${task}"`).join(', ')}` : ''}`);
 
       this.jobs[parsed.name] = {
         name: parsed.name,
@@ -653,6 +660,9 @@ export class Ease {
     }
     else {
 
+      if ( tasks ) this._logConfig(`Adding tasks ${tasks.map(task => `"${task}"`).join(', ')} to job "${parsed.name}"`);
+      if ( options ) this._logConfig(`Updating options of job "${parsed.name}"`);
+
       this.jobs[parsed.name].tasks = tasks || this.jobs[parsed.name].tasks;
       this.jobs[parsed.name].options = options ? _.assign({ runImmediately: true }, options) : this.jobs[parsed.name].options;
 
@@ -660,11 +670,15 @@ export class Ease {
 
     // Schedule the job if specified
     if ( this.jobs[parsed.name].options.schedule ) this._scheduleJob(parsed.name);
+    // Remove scheduled job if specified
     else {
 
       if ( this.scheduledJobs[parsed.name] ) this._logConfig(`Removed scheduled job "${parsed.name}"`);
 
       delete this.scheduledJobs[parsed.name];
+
+      // Stop the program clock if no jobs are scheduled
+      if ( ! _.keys(this.scheduledJobs).length && this.clock !== null ) clearInterval(this.clock);
 
     }
 

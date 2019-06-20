@@ -17,6 +17,7 @@ class Ease {
         this.scheduledJobs = {};
         this.clockActivated = false;
         this.activeJobs = {};
+        this.clock = null;
         fs_extra_1.default.ensureFileSync(path_1.default.join(os_1.default.homedir(), '.ease', 'ease.log'));
     }
     _getWeekDayName(day) {
@@ -33,7 +34,8 @@ class Ease {
     _getTimeLabel(time) {
         const hour = +time.split(':')[0];
         const minute = +time.split(':')[1];
-        return `${hour < 10 ? '0' : ''}${hour}:${minute < 10 ? '0' : ''}${minute}`;
+        const seconds = +time.split(':')[2];
+        return `${hour < 10 ? '0' : ''}${hour}:${minute < 10 ? '0' : ''}${minute}:${seconds < 10 ? '0' : ''}${seconds}`;
     }
     _getDayLabel(day) {
         return `${day}${Math.floor(day / 10) === 1 ? 'th' : ['st', 'nd', 'rd'][(day % 10) - 1] || 'th'}`;
@@ -88,10 +90,12 @@ class Ease {
             if (typeof options.schedule.time !== 'string') {
                 throw new Error(`Invalid job options on job "${jobName}"! "time" must be string.`);
             }
-            // Time must be in hh:mm format
+            // Time must be in hh:mm:ss format
             const hour = +options.schedule.time.split(':')[0];
             const minute = +options.schedule.time.split(':')[1];
-            if (typeof hour !== 'number' || isNaN(hour) || typeof minute !== 'number' || isNaN(minute) || hour < 0 || hour > 23 || minute < 0 || minute > 59) {
+            const second = +options.schedule.time.split(':')[2];
+            if (typeof hour !== 'number' || isNaN(hour) || typeof minute !== 'number' || isNaN(minute) || typeof second !== 'number' || isNaN(second) ||
+                hour < 0 || hour > 23 || minute < 0 || minute > 59 || second < 0 || second > 59) {
                 throw new Error(`Invalid job options on job "${jobName}"! "time" has invalid format.`);
             }
             // Validate day if recurrence is not daily
@@ -265,7 +269,7 @@ class Ease {
     _activateClock() {
         this.clockActivated = true;
         // Run every minute
-        setInterval(() => {
+        this.clock = setInterval(() => {
             const date = new Date();
             for (const jobName of lodash_1.default.keys(this.scheduledJobs)) {
                 const job = this.jobs[jobName];
@@ -274,13 +278,14 @@ class Ease {
                 const day = schedule.day;
                 const hour = +schedule.time.split(':')[0];
                 const minute = +schedule.time.split(':')[1];
+                const second = +schedule.time.split(':')[2];
                 if (
                 // If recurrence is daily and time is now
-                (recurrence === 'daily' && hour === date.getHours() && minute === date.getMinutes()) ||
+                (recurrence === 'daily' && hour === date.getHours() && minute === date.getMinutes() && second === date.getSeconds()) ||
                     // If recurrence is weekly and day of week and time is now
-                    (recurrence === 'weekly' && day === date.getDay() && hour === date.getHours() && minute === date.getMinutes()) ||
+                    (recurrence === 'weekly' && day === date.getDay() && hour === date.getHours() && minute === date.getMinutes() && second === date.getSeconds()) ||
                     // If recurrence is monthly and day of month and time is now
-                    (recurrence === 'monthly' && day === date.getDate() && hour === date.getHours() && minute === date.getMinutes())) {
+                    (recurrence === 'monthly' && day === date.getDate() && hour === date.getHours() && minute === date.getMinutes() && second === date.getSeconds())) {
                     // Reset all suspensions
                     job.suspended = false;
                     for (const taskName of job.tasks) {
@@ -296,7 +301,7 @@ class Ease {
                     });
                 }
             }
-        }, 60000);
+        }, 1000);
     }
     _scheduleJob(jobName) {
         // Add the job to scheduled jobs
@@ -373,8 +378,8 @@ class Ease {
             // Validate job options
             this._validateJobOptions(options, parsed.name);
         }
-        this._logConfig(`Registering job "${parsed.name}"${tasks ? ` with tasks ${tasks.map(task => `"${task}"`).join(', ')}` : ''}`);
         if (!this.jobs[parsed.name]) {
+            this._logConfig(`Registering job "${parsed.name}"${tasks ? ` with tasks ${tasks.map(task => `"${task}"`).join(', ')}` : ''}`);
             this.jobs[parsed.name] = {
                 name: parsed.name,
                 tasks: tasks,
@@ -383,16 +388,24 @@ class Ease {
             };
         }
         else {
+            if (tasks)
+                this._logConfig(`Adding tasks ${tasks.map(task => `"${task}"`).join(', ')} to job "${parsed.name}"`);
+            if (options)
+                this._logConfig(`Updating options of job "${parsed.name}"`);
             this.jobs[parsed.name].tasks = tasks || this.jobs[parsed.name].tasks;
             this.jobs[parsed.name].options = options ? lodash_1.default.assign({ runImmediately: true }, options) : this.jobs[parsed.name].options;
         }
         // Schedule the job if specified
         if (this.jobs[parsed.name].options.schedule)
             this._scheduleJob(parsed.name);
+        // Remove scheduled job if specified
         else {
             if (this.scheduledJobs[parsed.name])
                 this._logConfig(`Removed scheduled job "${parsed.name}"`);
             delete this.scheduledJobs[parsed.name];
+            // Stop the program clock if no jobs are scheduled
+            if (!lodash_1.default.keys(this.scheduledJobs).length && this.clock !== null)
+                clearInterval(this.clock);
         }
         // Show warning when job is not scheduled and not running immediately
         if (!this.jobs[parsed.name].options.runImmediately && !this.jobs[parsed.name].options.schedule)
