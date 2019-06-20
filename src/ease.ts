@@ -660,7 +660,7 @@ export class Ease {
     if ( this.jobs[parsed.name].options.schedule ) this._scheduleJob(parsed.name);
     else {
 
-      this._logConfig(`Removed scheduled job "${parsed.name}"`);
+      if ( this.scheduledJobs[parsed.name] ) this._logConfig(`Removed scheduled job "${parsed.name}"`);
 
       delete this.scheduledJobs[parsed.name];
 
@@ -762,7 +762,7 @@ export class Ease {
 
         if ( error ) return reject(error);
 
-        if ( response.headers['content-type'] && response.headers['content-type'].toLowerCase() === 'application/json' ) {
+        if ( response.headers['content-type'] && response.headers['content-type'].toLowerCase().includes('application/json') ) {
 
           try {
 

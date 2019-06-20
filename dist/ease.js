@@ -389,7 +389,8 @@ class Ease {
         if (this.jobs[parsed.name].options.schedule)
             this._scheduleJob(parsed.name);
         else {
-            this._logConfig(`Removed scheduled job "${parsed.name}"`);
+            if (this.scheduledJobs[parsed.name])
+                this._logConfig(`Removed scheduled job "${parsed.name}"`);
             delete this.scheduledJobs[parsed.name];
         }
         // Show warning when job is not scheduled and not running immediately
@@ -453,7 +454,7 @@ class Ease {
             request_1.default(options, (error, response) => {
                 if (error)
                     return reject(error);
-                if (response.headers['content-type'] && response.headers['content-type'].toLowerCase() === 'application/json') {
+                if (response.headers['content-type'] && response.headers['content-type'].toLowerCase().includes('application/json')) {
                     try {
                         response.body = JSON.parse(response.body);
                     }
