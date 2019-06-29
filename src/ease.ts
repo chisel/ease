@@ -8,7 +8,8 @@ import {
   GenericJobRunner,
   JobExecutionOptions,
   JobScheduleOptions,
-  JobInfo
+  JobInfo,
+  EaseModule
 } from './app.model';
 import path from 'path';
 import fs from 'fs-extra';
@@ -27,7 +28,8 @@ export class Ease {
   private clock: any = null;
 
   constructor(
-    private _verbose: boolean
+    private _verbose: boolean,
+    private _configDirname: string
   ) {
 
     fs.ensureFileSync(path.join(os.homedir(), '.ease', 'ease.log'));
@@ -809,6 +811,12 @@ export class Ease {
       });
 
     });
+
+  }
+
+  public install(name: string, module: EaseModule, ...args: any[]): void {
+
+    this.task(name, module(this.log.bind(this), this._configDirname, ...args));
 
   }
 

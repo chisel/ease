@@ -23,7 +23,7 @@ if ( ! program.args.length && ! program.all ) program.help();
 // Load the config
 const config: EaseConfig = require(program.config);
 
-const ease: Ease = new Ease(program.verbose);
+const ease: Ease = new Ease(program.verbose, path.dirname(program.config));
 
 // Configure Ease
 config(ease);

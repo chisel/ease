@@ -22,7 +22,7 @@ if (!commander_1.default.args.length && !commander_1.default.all)
     commander_1.default.help();
 // Load the config
 const config = require(commander_1.default.config);
-const ease = new ease_1.Ease(commander_1.default.verbose);
+const ease = new ease_1.Ease(commander_1.default.verbose, path_1.default.dirname(commander_1.default.config));
 // Configure Ease
 config(ease);
 // Run the jobs

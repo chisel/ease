@@ -4,9 +4,9 @@ Ease is a minimal task runner with scheduling capabilities designed to be flexib
 
 # Installation
 
-  1. Clone this repo.
-  2. `npm install`
-  3. `npm link`
+```
+npm install @chisel/ease -g
+```
 
 # Usage
 
@@ -20,7 +20,7 @@ module.exports = ease => {
 };
 ```
 
-## Ease Object API
+## API
 
   - `ease.task(name, callback)`: Defines a task with the given name and calls the callback for performing the task. The call back should either return void (for synchronous execution) or return a void promise (for asynchronous execution). Callback will be called with two parameters: `jobName` which holds the current executing job name and either `suspend`, which is a function that suspends the current task from running (only available on the `:before` hook) or `error` which is an error object (only available on the `:error` hook.)
   - `ease.job(name, tasks [,options])`: Defines a job with the given name and a list of the tasks to execute in order. An optional [Job Execution Options](#job-execution-options) object can be provided.
@@ -29,6 +29,7 @@ module.exports = ease => {
   - `ease.info(jobName)`: Returns an object with members `tasks` and `options` which are a list of the registered tasks and the options of the job. This info can help dynamically redefining jobs.
   - `ease.log(message)`: Logs a message which will be shown on the console and logged into `ease.log` file.
   - `ease.request(options)`: Sends an HTTP request using the given [options](https://www.npmjs.com/package/request#requestoptions-callback) and returns a promise with the response (the body of the response will be parsed to JSON if `content-type` header is set to `application/json` by the target.)
+  - `ease.install(taskName, plugin, ...args)`: Installs a plugin as a task with the given name. `...args` will be sent to the plugin.
 
 ## Task Hooks
 
@@ -172,6 +173,67 @@ module.exports = ease => {
 
 };
 ```
+
+## Plugins
+
+Tasks can be made into plugins in order to allow reuse and quick development. To install a plugin, follow these steps:
+
+  1. Install the plugin through NPM: `npm install ease-task-pluginname --save-dev` (replace `pluginname` with the name of the plugin)
+  2. Use the `install()` method to install and configure the plugin:
+      ```js
+      const sass = require('ease-task-sass');
+
+      module.exports = ease => {
+
+        // Install the plugin as `sass` task
+        ease.install('sass', sass, { dir: 'sass', ourDir: 'css', sourceMap: true });
+
+        // Use the task in a job
+        ease.job('process-sass-files', ['sass']);
+
+      };
+      ```
+
+### Creating Plugins
+
+To create an Ease plugin, write a module that exports a factory function which takes the following arguments and returns a task runner function:
+  - `logger`: An instance of `ease.log()` which can be used to log messages.
+  - `dirname`: The path to the directory where `easeconfig.js` is. Use this when constructing paths to make them relative to the config file.
+  - `...args`: Any arguments provided by the user. This can be the input your plugin needs (config object, etc.)
+
+Example:
+```js
+const fs = require('fs-extra');
+const path = require('path');
+
+module.exports = (logger, dirname, config) => {
+
+  // Task runner
+  return () => {
+
+    // Async task
+    return new Promise((resolve, reject) => {
+
+      const finalPath = path.join(dirname, config.dir);
+
+      logger(`Emptying "${finalPath}"...`);
+
+      // Empty the directory's content
+      fs.emptyDir(finalPath, error => {
+
+        if ( error ) reject(error);
+        else resolve();
+
+      });
+
+    });
+
+  };
+
+};
+```
+
+> When publishing Ease tasks, it's good practice to prefix the plugin name with `ease-task-`.
 
 ## Redefining Jobs
 

@@ -9,6 +9,7 @@ export interface Ease {
   log: (message: string) => void;
   hook: (job: string, task: GenericJobRunner) => void;
   info: (job: string) => JobInfo;
+  install: (name: string, module: EaseModule, ...args: any[]) => void;
 
 }
 
@@ -26,6 +27,8 @@ export interface JobInfo {
   options: JobExecutionOptions;
 
 }
+
+export type EaseModule = (logger: (message: string) => void, dirname: string, ...args: any[]) => GenericTaskRunner;
 
 export interface Task {
 

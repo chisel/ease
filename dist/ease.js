@@ -10,8 +10,9 @@ const chalk_1 = __importDefault(require("chalk"));
 const request_1 = __importDefault(require("request"));
 const lodash_1 = __importDefault(require("lodash"));
 class Ease {
-    constructor(_verbose) {
+    constructor(_verbose, _configDirname) {
         this._verbose = _verbose;
+        this._configDirname = _configDirname;
         this.jobs = {};
         this.tasks = {};
         this.scheduledJobs = {};
@@ -487,6 +488,9 @@ class Ease {
                 resolve(response);
             });
         });
+    }
+    install(name, module, ...args) {
+        this.task(name, module(this.log.bind(this), this._configDirname, ...args));
     }
     async _execJobs(jobNames, runAllJobs) {
         if (runAllJobs)
