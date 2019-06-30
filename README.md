@@ -194,6 +194,18 @@ Tasks can be made into plugins in order to allow reuse and quick development. To
       };
       ```
 
+### Available Plugins
+
+These plugins are made by the Chisel team:
+  - [SASS Plugin](https://www.npmjs.com/package/ease-task-sass)
+  - [CSS Minifier Plugin](https://www.npmjs.com/package/ease-task-minify-css)
+  - [JS Minifier Plugin](https://www.npmjs.com/package/ease-task-minify-js)
+  - [HTML Minifier Plugin](https://www.npmjs.com/package/ease-task-minify-html)
+  - [TypeScript Transpiler Plugin](https://www.npmjs.com/package/ease-task-typescript)
+  - [Autoprefixer Plugin](https://www.npmjs.com/package/ease-task-autoprefixer)
+
+If you have written an Ease plugin, [let us know](https://github.com/chisel/ease/issues/new) and we'll include it here in the list.
+
 ### Creating Plugins
 
 To create an Ease plugin, write a module that exports a factory function which takes the following arguments and returns a task runner function:
