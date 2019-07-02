@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Ease Task Runner</title>
+    <link rel="apple-touch-icon" sizes="180x180" href="./assets/theme/images/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="./assets/theme/images/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="./assets/theme/images/favicon-16x16.png">
+    <link rel="manifest" href="./assets/theme/images/site.webmanifest">
+    <link rel="mask-icon" href="./assets/theme/images/safari-pinned-tab.svg" color="#fc5a5a">
+    <meta name="msapplication-TileColor" content="#da532c">
+    <meta name="theme-color" content="#ffffff">
+    <link rel="stylesheet" href="./assets/theme/styles.css">
+  </head>
+  <body>
+    <div class="header">
+      <div class="container">
+        <div class="header-content">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1417.3 1417.3">
+          	<path d="M1050.3,88L1020,189.9c175.6,105.8,293,298.4,293,518.3c0,334-270.8,604.8-604.8,604.8c-43.6,0-86.1-4.6-127-13.4
+          		c-9.8-2.1-19.5-4.4-29.1-7l-7,7l-75.5,75.5c8.9,3.2,17.9,6.2,27,9.1c66.8,20.9,137.9,32.2,211.6,32.2
+          		c391.1,0,708.2-317.1,708.2-708.2C1416.4,441.1,1268.6,208.6,1050.3,88z M103.4,708.2c0-334,270.8-604.8,604.8-604.8
+          		c42.9,0,84.7,4.5,125,12.9L918,31.6C851.7,11,781.2,0,708.2,0C317.1,0,0,317.1,0,708.2c0,253.6,133.3,476.1,333.7,601.2l24.9-83.9
+          		l5.8-19.6C206.7,1096.7,103.4,914.5,103.4,708.2z"/>
+          	<polygon points="352.9,1417 595.2,709.4 371.5,709.4 1026.8,0.6 783.9,708.2 1011.2,708.2 	"/>
+          </svg>
+          <div class="header-text">
+            <div class="header-title">
+              Run your tasks with Ease!
+            </div>
+            <ul class="header-subtitle">
+              <li>Simple API and minimal configuration</li>
+              <li>Ability to schedule tasks recurrence</li>
+              <li>Dynamic task definition for complex workflows</li>
+              <li>Fast development with plugins</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <svg xmlns="http://www.w3.org/2000/svg" width="100%" viewBox="0 0 1920 440.589">
+        <path d="M0,1165.589H0V725H1920v.05L0,1165.589Z" transform="translate(0 -725)"/>
+      </svg>
+    </div>
+    <div class="main">
+        <h1 id="ease-task-runner">Ease Task Runner</h1>
+        <hr>
+          <p>Ease is a minimal task runner with scheduling capabilities designed to be flexible and easy to work with.</p>
+
+        <h1 id="installation">Installation</h1>
+        <hr>
+          <pre><code>npm install @chisel/ease -g</code></pre>
+        <h1 id="usage">Usage</h1>
+        <hr>
+          <p>Ease looks for a configuration file named <code>easeconfig.js</code> inside the current working directory for task and job definitions. The configuration file must export a function which accepts the <code>ease</code> object as its parameter, which can be used to define tasks, jobs, schedules, etc.</p>
+<pre><code class="language-js">module<span class="token punctuation">.</span><span class="token function-variable function">exports</span> <span class="token operator">=</span> <span class="token parameter">ease</span> <span class="token operator">=></span> <span class="token punctuation">{</span>
+
+  <span class="token comment">// Use the ease object here</span>
+
+<span class="token punctuation">}</span><span class="token punctuation">;</span></code></pre>
+
+        <h1 id="usage-api">API</h1>
+        <hr>
+          <ul>
+<li><code>ease.task(name, callback)</code>: Defines a task with the given name and calls the callback for performing the task. The call back should either return void (for synchronous execution) or return a void promise (for asynchronous execution). Callback will be called with two parameters: <code>jobName</code> which holds the current executing job name and either <code>suspend</code>, which is a function that suspends the current task from running (only available on the <code>:before</code> hook) or <code>error</code> which is an error object (only available on the <code>:error</code> hook.)</li>
+<li><code>ease.job(name, tasks [,options])</code>: Defines a job with the given name and a list of the tasks to execute in order. An optional <a href="#job-execution-options">Job Execution Options</a> object can be provided.</li>
+<li><code>ease.hook(name, callback)</code>: Defines a job hook with a callback.</li>
+<li><code>ease.suspend(jobName)</code>: Suspends a job by name.</li>
+<li><code>ease.info(jobName)</code>: Returns an object with members <code>tasks</code> and <code>options</code> which are a list of the registered tasks and the options of the job. This info can help dynamically redefining jobs.</li>
+<li><code>ease.log(message)</code>: Logs a message which will be shown on the console and logged into <code>ease.log</code> file.</li>
+<li><code>ease.request(options)</code>: Sends an HTTP request using the given <a href="https://www.npmjs.com/package/request#requestoptions-callback">options</a> and returns a promise with the response (the body of the response will be parsed to JSON if <code>content-type</code> header is set to <code>application/json</code> by the target.)</li>
+<li><code>ease.install(taskName, plugin, ...args)</code>: Installs a plugin as a task with the given name. <code>...args</code> will be sent to the plugin.</li>
+</ul>
+
+        <h1 id="usage-task-hooks">Task Hooks</h1>
+        <hr>
+          <p>The following hooks are available for all tasks which will be defined when appended to the task name in the <code>ease.task()</code> method:</p>
+<ul>
+<li><code>:before</code>: Runs before the task and can suspend the task from running using the <code>suspend</code> method in the callback arguments. Can be asynchronous if the callback returns a promise.</li>
+<li><code>:after</code>: Runs after the task. Can be asynchronous if the callback returns a promise.</li>
+<li><code>:suspend</code>: Runs after the task was suspended. Can be asynchronous if the callback returns a promise.</li>
+<li><code>:error</code>: Runs after an error has occurred in the task or any of its hooks. Can be asynchronous if the callback returns a promise.</li>
+</ul>
+<pre><code class="language-js">module<span class="token punctuation">.</span><span class="token function-variable function">exports</span> <span class="token operator">=</span> <span class="token parameter">ease</span> <span class="token operator">=></span> <span class="token punctuation">{</span>
+
+  ease<span class="token punctuation">.</span><span class="token function">task</span><span class="token punctuation">(</span><span class="token string">'foo:before'</span><span class="token punctuation">,</span> <span class="token punctuation">(</span><span class="token parameter">jobName<span class="token punctuation">,</span> suspend</span><span class="token punctuation">)</span> <span class="token operator">=></span> <span class="token punctuation">{</span>
+
+    ease<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token string">'Running before task foo...'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  ease<span class="token punctuation">.</span><span class="token function">task</span><span class="token punctuation">(</span><span class="token string">'foo'</span><span class="token punctuation">,</span> <span class="token parameter">jobName</span> <span class="token operator">=></span> <span class="token punctuation">{</span>
+
+    <span class="token comment">// Do stuff</span>
+
+  <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  ease<span class="token punctuation">.</span><span class="token function">task</span><span class="token punctuation">(</span><span class="token string">'foo:error'</span><span class="token punctuation">,</span> <span class="token punctuation">(</span><span class="token parameter">jobName<span class="token punctuation">,</span> error</span><span class="token punctuation">)</span> <span class="token operator">=></span> <span class="token punctuation">{</span>
+
+    ease<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token string">'Task foo has failed:\n'</span> <span class="token operator">+</span> error<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token punctuation">}</span><span class="token punctuation">;</span></code></pre>
+
+        <h1 id="usage-job-hooks">Job Hooks</h1>
+        <hr>
+          <p>Jobs have hooks identical to tasks and are defined using the <code>ease.hook()</code> method, the only difference is the callback arguments in which the <code>jobName</code> is not provided.</p>
+<pre><code class="language-js">module<span class="token punctuation">.</span><span class="token function-variable function">exports</span> <span class="token operator">=</span> <span class="token parameter">ease</span> <span class="token operator">=></span> <span class="token punctuation">{</span>
+
+  ease<span class="token punctuation">.</span><span class="token function">task</span><span class="token punctuation">(</span><span class="token string">'foo'</span><span class="token punctuation">,</span> <span class="token parameter">jobName</span> <span class="token operator">=></span> ease<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token string">'Running foo...'</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  ease<span class="token punctuation">.</span><span class="token function">job</span><span class="token punctuation">(</span><span class="token string">'job1'</span><span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token string">'foo'</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  ease<span class="token punctuation">.</span><span class="token function">hook</span><span class="token punctuation">(</span><span class="token string">'job1:after'</span><span class="token punctuation">,</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=></span> ease<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token string">'Job1 has finished.'</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token punctuation">}</span><span class="token punctuation">;</span></code></pre>
+
+        <h1 id="usage-job-execution-options">Job Execution Options</h1>
+        <hr>
+          <p>The following properties are defined on the options object:</p>
+<ul>
+<li><code>runImmediately</code>: A boolean property which indicates if job should be run immediately after the task manager is run (defaults to true).</li>
+<li><code>schedule</code>: Namespace for schedule options.<ul>
+<li><code>recurrence</code>: A string enum (<code>daily</code>, <code>weekly</code>, and <code>monthly</code>) which indicates the recurrence of the job (required).</li>
+<li><code>day</code>: A number which indicates the day of the recurrence (day of the week or day of the month). This is required if <code>recurrence</code> is either <code>weekly</code> or <code>monthly</code>.</li>
+<li><code>time</code>: A string with <code>hh:mm:ss</code> format which indicates the time at which the recurrence occurs (required).</li>
+</ul>
+</li>
+</ul>
+
+        <h1 id="usage-configuration-example">Configuration Example</h1>
+        <hr>
+          <pre><code class="language-js">module<span class="token punctuation">.</span><span class="token function-variable function">exports</span> <span class="token operator">=</span> <span class="token parameter">ease</span> <span class="token operator">=></span> <span class="token punctuation">{</span>
+
+  <span class="token comment">// Define sync task before hook</span>
+  ease<span class="token punctuation">.</span><span class="token function">task</span><span class="token punctuation">(</span><span class="token string">'sync-task:before'</span><span class="token punctuation">,</span> <span class="token punctuation">(</span><span class="token parameter">jobName<span class="token punctuation">,</span> suspend</span><span class="token punctuation">)</span> <span class="token operator">=></span> <span class="token punctuation">{</span>
+
+    ease<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token string">'Running sync-task:before inside job '</span> <span class="token operator">+</span> jobName<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token comment">// Suspend sync-task</span>
+    <span class="token function">suspend</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  ease<span class="token punctuation">.</span><span class="token function">task</span><span class="token punctuation">(</span><span class="token string">'sync-task'</span><span class="token punctuation">,</span> <span class="token parameter">jobName</span> <span class="token operator">=></span> <span class="token punctuation">{</span>
+
+    ease<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token string">'Running sync-task'</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// Won't run since task was suspended</span>
+
+  <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token comment">// Define async task</span>
+  ease<span class="token punctuation">.</span><span class="token function">task</span><span class="token punctuation">(</span><span class="token string">'async-task'</span><span class="token punctuation">,</span> <span class="token parameter">jobName</span> <span class="token operator">=></span> <span class="token punctuation">{</span>
+
+    <span class="token keyword">return</span> <span class="token keyword">new</span> <span class="token class-name">Promise</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token parameter">resolve<span class="token punctuation">,</span> reject</span><span class="token punctuation">)</span> <span class="token operator">=></span> <span class="token punctuation">{</span>
+
+      ease<span class="token punctuation">.</span><span class="token function">request</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+        uri<span class="token punctuation">:</span> <span class="token string">'https://google.com'</span>
+      <span class="token punctuation">}</span><span class="token punctuation">)</span>
+      <span class="token punctuation">.</span><span class="token function">then</span><span class="token punctuation">(</span><span class="token parameter">response</span> <span class="token operator">=></span> <span class="token punctuation">{</span>
+
+        ease<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token string">'Got response'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token function">resolve</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+      <span class="token punctuation">}</span><span class="token punctuation">)</span>
+      <span class="token punctuation">.</span><span class="token function">catch</span><span class="token punctuation">(</span>reject<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token comment">// Define async task after hook</span>
+  ease<span class="token punctuation">.</span><span class="token function">task</span><span class="token punctuation">(</span><span class="token string">'async-task:after'</span><span class="token punctuation">,</span> <span class="token parameter">jobName</span> <span class="token operator">=></span> <span class="token punctuation">{</span>
+
+    ease<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token string">'Cleaning up...'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    ease<span class="token punctuation">.</span><span class="token function">suspend</span><span class="token punctuation">(</span>jobName<span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// Suspends the current job, no tasks will be run after this point</span>
+
+  <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  ease<span class="token punctuation">.</span><span class="token function">job</span><span class="token punctuation">(</span><span class="token string">'test'</span><span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token string">'sync-task'</span><span class="token punctuation">,</span> <span class="token string">'async-task'</span><span class="token punctuation">,</span> <span class="token string">'sync-task'</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token comment">// Define job error handler</span>
+  ease<span class="token punctuation">.</span><span class="token function">hook</span><span class="token punctuation">(</span><span class="token string">'test:error'</span><span class="token punctuation">,</span> <span class="token parameter">error</span> <span class="token operator">=></span> <span class="token punctuation">{</span>
+
+    ease<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token string">'Caught error: '</span> <span class="token operator">+</span> error<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token punctuation">}</span><span class="token punctuation">;</span></code></pre>
+<p>Running <code>ease test</code> will execute the following tasks:</p>
+<ol>
+<li><code>sync-task:before</code> (suspends <code>sync-task</code>)</li>
+<li><code>async-task</code></li>
+<li><code>async-task:after</code> (suspends <code>test</code> job)</li>
+</ol>
+
+        <h1 id="usage-scheduled-job-example">Scheduled Job Example</h1>
+        <hr>
+          <pre><code class="language-js">module<span class="token punctuation">.</span><span class="token function-variable function">exports</span> <span class="token operator">=</span> <span class="token parameter">ease</span> <span class="token operator">=></span> <span class="token punctuation">{</span>
+
+  ease<span class="token punctuation">.</span><span class="token function">task</span><span class="token punctuation">(</span><span class="token string">'task1'</span><span class="token punctuation">,</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=></span> ease<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token string">'Running task 1'</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token comment">// Schedule job to run every Monday at 5 in the afternoon</span>
+  ease<span class="token punctuation">.</span><span class="token function">job</span><span class="token punctuation">(</span><span class="token string">'job1'</span><span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token string">'task1'</span><span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token punctuation">{</span>
+    runImmediately<span class="token punctuation">:</span> <span class="token boolean">false</span><span class="token punctuation">,</span>
+    schedule<span class="token punctuation">:</span> <span class="token punctuation">{</span>
+      recurrence<span class="token punctuation">:</span> <span class="token string">'weekly'</span><span class="token punctuation">,</span>
+      day<span class="token punctuation">:</span> <span class="token number">1</span><span class="token punctuation">,</span>
+      time<span class="token punctuation">:</span> <span class="token string">'17:00:00'</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token punctuation">}</span><span class="token punctuation">;</span></code></pre>
+
+        <h1 id="usage-plugins">Plugins</h1>
+        <hr>
+          <p>Tasks can be made into plugins in order to allow reuse and quick development. To install a plugin, follow these steps:</p>
+<ol>
+<li><p>Install the plugin through NPM: <code>npm install ease-task-pluginname --save-dev</code> (replace <code>pluginname</code> with the name of the plugin)</p>
+</li>
+<li><p>Use the <code>install()</code> method to install and configure the plugin:</p>
+<pre><code class="language-js"> <span class="token keyword">const</span> sass <span class="token operator">=</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'ease-task-sass'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+ module<span class="token punctuation">.</span><span class="token function-variable function">exports</span> <span class="token operator">=</span> <span class="token parameter">ease</span> <span class="token operator">=></span> <span class="token punctuation">{</span>
+
+   <span class="token comment">// Install the plugin as `sass` task</span>
+   ease<span class="token punctuation">.</span><span class="token function">install</span><span class="token punctuation">(</span><span class="token string">'sass'</span><span class="token punctuation">,</span> sass<span class="token punctuation">,</span> <span class="token punctuation">{</span> dir<span class="token punctuation">:</span> <span class="token string">'sass'</span><span class="token punctuation">,</span> ourDir<span class="token punctuation">:</span> <span class="token string">'css'</span><span class="token punctuation">,</span> sourceMap<span class="token punctuation">:</span> <span class="token boolean">true</span> <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+   <span class="token comment">// Use the task in a job</span>
+   ease<span class="token punctuation">.</span><span class="token function">job</span><span class="token punctuation">(</span><span class="token string">'process-sass-files'</span><span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token string">'sass'</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+ <span class="token punctuation">}</span><span class="token punctuation">;</span></code></pre>
+</li>
+</ol>
+
+        <h1 id="usage-plugins-available-plugins">Available Plugins</h1>
+        <hr>
+          <p>These plugins are made by the Chisel team:</p>
+<ul>
+<li><a href="https://www.npmjs.com/package/ease-task-sass">SASS Plugin</a></li>
+<li><a href="https://www.npmjs.com/package/ease-task-minify-css">CSS Minifier Plugin</a></li>
+<li><a href="https://www.npmjs.com/package/ease-task-minify-js">JS Minifier Plugin</a></li>
+<li><a href="https://www.npmjs.com/package/ease-task-minify-html">HTML Minifier Plugin</a></li>
+<li><a href="https://www.npmjs.com/package/ease-task-typescript">TypeScript Transpiler Plugin</a></li>
+<li><a href="https://www.npmjs.com/package/ease-task-autoprefixer">Autoprefixer Plugin</a></li>
+</ul>
+<p>If you have written an Ease plugin, <a href="https://github.com/chisel/ease/issues/new">let us know</a> and we&#39;ll include it here in the list.</p>
+
+        <h1 id="usage-plugins-creating-plugins">Creating Plugins</h1>
+        <hr>
+          <p>To create an Ease plugin, write a module that exports a factory function which takes the following arguments and returns a task runner function:</p>
+<ul>
+<li><code>logger</code>: An instance of <code>ease.log()</code> which can be used to log messages.</li>
+<li><code>dirname</code>: The path to the directory where <code>easeconfig.js</code> is. Use this when constructing paths to make them relative to the config file.</li>
+<li><code>...args</code>: Any arguments provided by the user. This can be the input your plugin needs (config object, etc.)</li>
+</ul>
+<p>Example:</p>
+<pre><code class="language-js"><span class="token keyword">const</span> fs <span class="token operator">=</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'fs-extra'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">const</span> path <span class="token operator">=</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'path'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+module<span class="token punctuation">.</span><span class="token function-variable function">exports</span> <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token parameter">logger<span class="token punctuation">,</span> dirname<span class="token punctuation">,</span> config</span><span class="token punctuation">)</span> <span class="token operator">=></span> <span class="token punctuation">{</span>
+
+  <span class="token comment">// Task runner</span>
+  <span class="token keyword">return</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=></span> <span class="token punctuation">{</span>
+
+    <span class="token comment">// Async task</span>
+    <span class="token keyword">return</span> <span class="token keyword">new</span> <span class="token class-name">Promise</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token parameter">resolve<span class="token punctuation">,</span> reject</span><span class="token punctuation">)</span> <span class="token operator">=></span> <span class="token punctuation">{</span>
+
+      <span class="token keyword">const</span> finalPath <span class="token operator">=</span> path<span class="token punctuation">.</span><span class="token function">join</span><span class="token punctuation">(</span>dirname<span class="token punctuation">,</span> config<span class="token punctuation">.</span>dir<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+      <span class="token function">logger</span><span class="token punctuation">(</span><span class="token template-string"><span class="token string">`Emptying "</span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>finalPath<span class="token interpolation-punctuation punctuation">}</span></span><span class="token string">"...`</span></span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+      <span class="token comment">// Empty the directory's content</span>
+      fs<span class="token punctuation">.</span><span class="token function">emptyDir</span><span class="token punctuation">(</span>finalPath<span class="token punctuation">,</span> <span class="token parameter">error</span> <span class="token operator">=></span> <span class="token punctuation">{</span>
+
+        <span class="token keyword">if</span> <span class="token punctuation">(</span> error <span class="token punctuation">)</span> <span class="token function">reject</span><span class="token punctuation">(</span>error<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">else</span> <span class="token function">resolve</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+      <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token punctuation">}</span><span class="token punctuation">;</span>
+
+<span class="token punctuation">}</span><span class="token punctuation">;</span></code></pre>
+<blockquote>
+<p>When publishing Ease tasks, it&#39;s good practice to prefix the plugin name with <code>ease-task-</code>.</p>
+</blockquote>
+
+        <h1 id="usage-dynamic-job-redefinition">Dynamic Job Redefinition</h1>
+        <hr>
+          <p>Jobs can be redefined dynamically from within tasks. This can be achieved by calling <code>ease.job()</code> again which would allow redefining the tasks or the schedule for a job.</p>
+<blockquote>
+<p>If a job already exists, calling <code>ease.job()</code> the second time doesn&#39;t require the tasks array. This can be used to reschedule a job without affecting it&#39;s registered tasks. Example: <code>ease.job(&#39;job1&#39;, null, { schedule: {...} })</code>.</p>
+</blockquote>
+<blockquote>
+<p>You can remove a scheduled job by running <code>ease.job(&#39;job1&#39;, null, { schedule: null })</code> on an existing job.</p>
+</blockquote>
+<blockquote>
+<p>You can register new tasks dynamically using <code>ease.job(&#39;job1&#39;, ease.info(&#39;job1&#39;).tasks.concat(&#39;new-task&#39;))</code>.</p>
+</blockquote>
+<blockquote>
+<p>You can define tasks dynamically, but jobs that are dynamically defined won&#39;t run unless scheduled. If you need to run a dynamically defined job right away, you can schedule it to be run the next second and then remove its schedule on the job&#39;s after hook.</p>
+</blockquote>
+<pre><code class="language-js">module<span class="token punctuation">.</span><span class="token function-variable function">exports</span> <span class="token operator">=</span> <span class="token parameter">ease</span> <span class="token operator">=></span> <span class="token punctuation">{</span>
+
+  ease<span class="token punctuation">.</span><span class="token function">task</span><span class="token punctuation">(</span><span class="token string">'foo'</span><span class="token punctuation">,</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=></span> ease<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token string">'Running task foo'</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  ease<span class="token punctuation">.</span><span class="token function">task</span><span class="token punctuation">(</span><span class="token string">'bar'</span><span class="token punctuation">,</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=></span> ease<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token string">'Running task bar'</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token comment">// Defining job "job1" with task "foo"</span>
+  ease<span class="token punctuation">.</span><span class="token function">job</span><span class="token punctuation">(</span><span class="token string">'job1'</span><span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token string">'foo'</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token comment">// Dynamically adding task "bar" to job "job1" using a before hook</span>
+  ease<span class="token punctuation">.</span><span class="token function">hook</span><span class="token punctuation">(</span><span class="token string">'job1:before'</span><span class="token punctuation">,</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=></span> <span class="token punctuation">{</span>
+
+    ease<span class="token punctuation">.</span><span class="token function">job</span><span class="token punctuation">(</span><span class="token string">'job1'</span><span class="token punctuation">,</span> ease<span class="token punctuation">.</span><span class="token function">info</span><span class="token punctuation">(</span><span class="token string">'job1'</span><span class="token punctuation">)</span><span class="token punctuation">.</span>tasks<span class="token punctuation">.</span><span class="token function">concat</span><span class="token punctuation">(</span><span class="token string">'bar'</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token punctuation">}</span><span class="token punctuation">;</span></code></pre>
+
+        <h1 id="cli">CLI</h1>
+        <hr>
+          <p><code>ease [options] &lt;jobs&gt;</code></p>
+<p>Options:</p>
+<ul>
+<li><code>-v --verbose</code>: Displays detailed logs in the console.</li>
+<li><code>-c --config</code>: Override the default <code>easeconfig.js</code> file location.</li>
+<li><code>-a --all</code>: Run all jobs defined in the ease config file.</li>
+<li><code>-h --help</code>: Show help.</li>
+<li><code>--version</code>: Show ease version.</li>
+</ul>
+<p>Example: <code>ease job1 job2</code></p>
+
+        <h1 id="logs">Logs</h1>
+        <hr>
+          <p>Logs are stored at <code>~/.ease/ease.log</code> (or <code>%userprofile%\.ease\ease.log</code> on Windows).</p>
+
+        <h1 id="building">Building</h1>
+        <hr>
+          <p>Run <code>npm run build</code> to build the source into the <code>dist</code> directory.</p>
+
+    </div>
+    <div class="footer">
+      <svg xmlns="http://www.w3.org/2000/svg" width="100%" viewBox="0 0 1920 440.589">
+        <path d="M1920,440.59H0L1920,.05V440.59Z" transform="translate(-0.001 -0.051)"/>
+      </svg>
+      <div class="links">
+        <a href="https://github.com/chisel/ease" target="_blank">Source Code</a>
+        <a href="https://github.com/chisel/ease/issues/new" target="_blank">Send Feedback</a>
+        <a href="https://fluorite.js.org" target="_blank">Documentation Tool</a>
+        <a href="http://chiselpowered.com" target="_blank">Made By The Chisel Team</a>
+      </div>
+    </div>
+  </body>
+</html>
