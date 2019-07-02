@@ -2,6 +2,7 @@
   "title": "Ease Task Runner",
   "basePath": "src",
   "outputDir": "../../ease-gh-pages",
+  "exclusions": ["CNAME"],
   "blueprint": [
     { "title": "Ease Task Runner", "content": "index.md" },
     { "title": "Installation", "content": "installation.md" },
