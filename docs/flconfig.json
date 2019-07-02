@@ -1,0 +1,28 @@
+{
+  "title": "Ease Task Runner",
+  "basePath": "src",
+  "outputDir": "../../ease-gh-pages",
+  "blueprint": [
+    { "title": "Ease Task Runner", "content": "index.md" },
+    { "title": "Installation", "content": "installation.md" },
+    { "title": "Usage", "content": "usage/index.md", "sub": [
+      { "title": "API", "content": "usage/api.md" },
+      { "title": "Task Hooks", "content": "usage/task-hooks.md" },
+      { "title": "Job Hooks", "content": "usage/job-hooks.md" },
+      { "title": "Job Execution Options", "content": "usage/job-execution-options.md" },
+      { "title": "Configuration Example", "content": "usage/configuration-example.md" },
+      { "title": "Scheduled Job Example", "content": "usage/scheduled-job-example.md" },
+      { "title": "Plugins", "content": "usage/plugins/index.md", "sub": [
+        { "title": "Available Plugins", "content": "usage/plugins/available-plugins.md" },
+        { "title": "Creating Plugins", "content": "usage/plugins/creating-plugins.md" }
+      ]},
+      { "title": "Dynamic Job Redefinition", "content": "usage/dynamic-job-redefinition.md" }
+    ]},
+    { "title": "CLI", "content": "cli.md" },
+    { "title": "Logs", "content": "logs.md" },
+    { "title": "Building", "content": "building.md" }
+  ],
+  "rendererOptions": {
+    "theme": "ease"
+  }
+}
