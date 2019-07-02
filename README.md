@@ -14,8 +14,7 @@ npm install @chisel/ease -g
 
 # Quick Start
 
-1. Create the following file in project root:
-
+1. Create the following file in project root:  
   **easeconfig.js:**
   ```js
   module.exports = ease => {
