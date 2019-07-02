@@ -1,4 +1,6 @@
-<img src="./docs/images/logo.svg" width="350" height="350">
+<p align="center">
+  <img src="./docs/images/logo.svg" width="350" height="350">
+</p>
 
 # Ease Task Runner
 
