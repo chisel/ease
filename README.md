@@ -1,6 +1,4 @@
-<div style="display: flex; width: 100%; justify-content: center;">
-  <img src="./docs/images/logo.svg" style="width: 350px; height: 350px;">
-</div>
+<img src="./docs/images/logo.svg" width="350" height="350">
 
 # Ease Task Runner
 
