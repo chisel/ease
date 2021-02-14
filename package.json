@@ -1,6 +1,6 @@
 {
   "name": "@chisel/ease",
-  "version": "1.1.2",
+  "version": "1.2.0",
   "description": "A minimal task runner with scheduling capabilities.",
   "main": "bin/lib/ease.js",
   "scripts": {
@@ -18,7 +18,7 @@
   },
   "homepage": "https://github.com/ramtinsoltani/ease#readme",
   "bin": {
-    "ease": "./bin/ease.js"
+    "ease": "bin/ease.js"
   },
   "files": [
     "bin"
