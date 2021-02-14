@@ -1,10 +1,7 @@
-import { OptionsWithUri } from 'request';
-
 export interface Ease {
 
   task: (name: string, task: GenericTaskRunner) => void;
   job: (name: string, tasks: string[], options?: JobExecutionOptions) => void;
-  request: (options: OptionsWithUri) => Promise<any>;
   suspend: (job: string) => void;
   log: (message: string) => void;
   hook: (job: string, task: GenericJobRunner) => void;

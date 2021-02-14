@@ -2,9 +2,9 @@
   "name": "@chisel/ease",
   "version": "1.1.2",
   "description": "A minimal task runner with scheduling capabilities.",
-  "main": "dist/app.js",
+  "main": "bin/lib/ease.js",
   "scripts": {
-    "build": "npx tsc",
+    "start": "node ./node_modules/typescript/bin/tsc --build",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -18,20 +18,24 @@
   },
   "homepage": "https://github.com/ramtinsoltani/ease#readme",
   "bin": {
-    "ease": "./dist/app.js"
+    "ease": "./bin/ease.js"
   },
+  "files": [
+    "bin"
+  ],
   "dependencies": {
+    "argumental": "^1.1.1",
     "chalk": "^2.4.2",
-    "commander": "^2.20.0",
-    "fs-extra": "^8.0.1",
-    "lodash": "^4.17.11",
-    "request": "^2.88.0"
+    "fs-extra": "^8.1.0",
+    "got": "^11.8.1",
+    "lodash": "^4.17.20",
+    "source-map-support": "^0.5.19"
   },
   "devDependencies": {
     "@types/fs-extra": "^7.0.0",
-    "@types/lodash": "^4.14.134",
-    "@types/node": "^12.0.8",
-    "@types/request": "^2.48.1",
-    "typescript": "^3.5.2"
+    "@types/got": "^9.6.11",
+    "@types/lodash": "^4.14.168",
+    "@types/node": "^12.20.0",
+    "typescript": "^3.9.9"
   }
 }
