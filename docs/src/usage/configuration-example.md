@@ -1,4 +1,6 @@
 ```js
+const got = require('got');
+
 module.exports = ease => {
 
   // Define sync task before hook
@@ -21,9 +23,7 @@ module.exports = ease => {
 
     return new Promise((resolve, reject) => {
 
-      ease.request({
-        uri: 'https://google.com'
-      })
+      got.get('https://google.com')
       .then(response => {
 
         ease.log('Got response');
