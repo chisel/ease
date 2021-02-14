@@ -1,41 +1,45 @@
-export interface Ease {
+import { Ease } from './ease';
 
-  task: (name: string, task: GenericTaskRunner) => void;
-  job: (name: string, tasks: string[], options?: JobExecutionOptions) => void;
-  suspend: (job: string) => void;
-  log: (message: string) => void;
-  hook: (job: string, task: GenericJobRunner) => void;
-  info: (job: string) => JobInfo;
-  install: (name: string, module: EaseModule, ...args: any[]) => void;
-
-}
+/** Suspends the current task or job. */
+export type SuspendFunction = () => void;
 
 export type EaseConfig = (ease: Ease) => void;
-export type GenericTaskRunner = (jobName: string) => Promise<void>|void;
-export type BeforeTaskRunner = (jobName: string, suspend: () => void) => Promise<void>|void;
-export type ErrorTaskRunner = (jobName: string, error: Error) => Promise<void>|void;
-export type GenericJobRunner = () => Promise<void>|void;
-export type BeforeJobRunner = (suspend: () => void) => Promise<void>|void;
-export type ErrorJobRunner = (error: Error) => Promise<void>|void;
+/**
+* A task runner function.
+* @param jobName The name of the running job.
+* @param errorOrSuspend Either an erro object (if within :error hook) or a suspend function (if within :before hook).
+                        Would be undefined otherwise.
+*/
+export type TaskRunner<T=unknown> = (jobName: string, errorOrSuspend?: T) => Promise<void>|void;
+/**
+* A job runner function for an :error job hook.
+* @param errorOrSuspend Either an erro object (if within :error hook) or a suspend function (if within :before hook).
+                        Would be undefined otherwise.
+*/
+export type JobRunner<T=unknown> = (errorOrSuspend?: T) => Promise<void>|void;
 
+/** Information about a registered job. */
 export interface JobInfo {
 
+  /** Name of the registered tasks in the job. */
   tasks: string[];
+  /** The job execution options. */
   options: JobExecutionOptions;
 
 }
 
-export type EaseModule = (logger: (message: string) => void, dirname: string, ...args: any[]) => GenericTaskRunner;
+/** Ease plugin module. */
+export type EaseModule = (logger: (message: string) => void, dirname: string, ...args: any[]) => TaskRunner;
 
 export interface Task {
 
   name: string;
   suspended: boolean;
-  beforeHook?: BeforeTaskRunner;
-  afterHook?: GenericTaskRunner;
-  errorHook?: ErrorTaskRunner;
-  suspendHook?: GenericTaskRunner;
-  runner?: GenericTaskRunner;
+  beforeHook?: TaskRunner<SuspendFunction>;
+  afterHook?: TaskRunner;
+  errorHook?: TaskRunner<Error>;
+  suspendHook?: TaskRunner;
+  runner?: TaskRunner;
 
 }
 
@@ -44,10 +48,10 @@ export interface Job {
   name: string;
   tasks: string[];
   suspended: boolean;
-  beforeHook?: BeforeJobRunner;
-  afterHook?: GenericJobRunner;
-  errorHook?: ErrorJobRunner;
-  suspendHook?: GenericJobRunner;
+  beforeHook?: JobRunner<SuspendFunction>;
+  afterHook?: JobRunner;
+  errorHook?: JobRunner<Error>;
+  suspendHook?: JobRunner;
   options: JobExecutionOptions;
 
 }
@@ -58,16 +62,50 @@ export interface Registry<T> {
 
 }
 
+/** Job execution options object. */
 export interface JobExecutionOptions {
 
+  /** Indicates if job should be run immediately after the task manager is run. */
   runImmediately?: boolean;
-  schedule?: JobScheduleOptions;
+  /** Job schedule options object. */
+  schedule?: DailyScheduleOptions|WeeklyScheduleOptions|MonthlyScheduleOptions;
+
+}
+
+export interface DailyScheduleOptions {
+
+  /** The job recurrence. */
+  recurrence: 'daily';
+  /** The time of the recurrence in hh:mm:ss format. */
+  time: string;
+
+}
+
+export interface WeeklyScheduleOptions {
+
+  /** The job recurrence. */
+  recurrence: 'weekly';
+  /** Day of the week. */
+  day: number;
+  /** The time of the recurrence in hh:mm:ss format. */
+  time: string;
+
+}
+
+export interface MonthlyScheduleOptions {
+
+  /** The job recurrence. */
+  recurrence: 'monthly';
+  /** Day of the month. */
+  day: number;
+  /** The time of the recurrence in hh:mm:ss format. */
+  time: string;
 
 }
 
 export interface JobScheduleOptions {
 
-  recurrence: string;
+  recurrence: 'daily'|'weekly'|'monthly';
   day?: number;
   time: string;
 

@@ -11,6 +11,7 @@
     "target": "es2018",
     "sourceRoot": "src",
     "outDir": "bin",
+    "declaration": true,
     "typeRoots": [
       "node_modules/@types"
     ],
@@ -20,6 +21,7 @@
   },
   "exclude": [
     "bin",
-    "node_modules"
+    "node_modules",
+    "easeconfig.ts"
   ]
 }

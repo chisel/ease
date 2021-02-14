@@ -2,10 +2,9 @@ import {
   Registry,
   Task,
   Job,
-  GenericTaskRunner,
-  ErrorTaskRunner,
-  ErrorJobRunner,
-  GenericJobRunner,
+  TaskRunner,
+  JobRunner,
+  SuspendFunction,
   JobExecutionOptions,
   JobScheduleOptions,
   JobInfo,
@@ -16,6 +15,18 @@ import fs from 'fs-extra';
 import os from 'os';
 import chalk from 'chalk';
 import _ from 'lodash';
+
+export {
+  TaskRunner,
+  JobRunner,
+  SuspendFunction,
+  DailyScheduleOptions,
+  WeeklyScheduleOptions,
+  MonthlyScheduleOptions,
+  JobExecutionOptions,
+  JobInfo,
+  EaseModule
+} from './models';
 
 export class Ease {
 
@@ -173,30 +184,30 @@ export class Ease {
         }
 
         // Day must be a number
-        if ( typeof options.schedule.day !== 'number' ) {
+        if ( typeof (<JobScheduleOptions>options.schedule).day !== 'number' ) {
 
           throw new Error(`Invalid job options on job "${jobName}"! "day" must be a number.`);
 
         }
 
         // Day must be between 1-7 if recurrence is weekly
-        if ( options.schedule.recurrence.trim().toLowerCase() === 'weekly' && (options.schedule.day < 1 || options.schedule.day > 7) ) {
+        if ( options.schedule.recurrence.trim().toLowerCase() === 'weekly' && ((<JobScheduleOptions>options.schedule).day < 1 || (<JobScheduleOptions>options.schedule).day > 7) ) {
 
           throw new Error(`Invalid job options on job "${jobName}"! "day" must be between 1-7 when recurrence is weekly.`);
 
         }
 
         // Day must be between 1-31 if recurrence is monthly
-        if ( options.schedule.recurrence.trim().toLowerCase() === 'mothly' && (options.schedule.day < 1 || options.schedule.day > 31) ) {
+        if ( options.schedule.recurrence.trim().toLowerCase() === 'mothly' && ((<JobScheduleOptions>options.schedule).day < 1 || (<JobScheduleOptions>options.schedule).day > 31) ) {
 
           throw new Error(`Invalid job options on job "${jobName}"! "day" must be between 1-31 when recurrence is monthly.`);
 
         }
 
         // Show warning if day is between 29-31 with monthly recurrence
-        if ( options.schedule.recurrence.trim().toLowerCase() === 'mothly' && options.schedule.day > 28 ) {
+        if ( options.schedule.recurrence.trim().toLowerCase() === 'mothly' && (<JobScheduleOptions>options.schedule).day > 28 ) {
 
-          this._logWarning(`Job "${jobName}" will not be executed on certain months since schedule day is "${options.schedule.day}"!`);
+          this._logWarning(`Job "${jobName}" will not be executed on certain months since schedule day is "${(<JobScheduleOptions>options.schedule).day}"!`);
 
         }
 
@@ -206,7 +217,7 @@ export class Ease {
 
   }
 
-  private async _onTaskError(handler: ErrorTaskRunner|undefined, taskName: string, jobName: string, error: Error) {
+  private async _onTaskError(handler: TaskRunner<Error>|undefined, taskName: string, jobName: string, error: Error) {
 
     if ( handler ) {
 
@@ -225,7 +236,7 @@ export class Ease {
 
   }
 
-  private async _onJobError(handler: ErrorJobRunner|undefined, jobName: string, error: Error) {
+  private async _onJobError(handler: JobRunner<Error>|undefined, jobName: string, error: Error) {
 
     if ( handler ) {
 
@@ -544,7 +555,12 @@ export class Ease {
 
   }
 
-  public task(name: string, task: GenericTaskRunner): void {
+  /**
+  * Defines a task or a task hook.
+  * @param name A task name (can include hook syntax for registering a hook).
+  * @param task A task runner to register for the task.
+  */
+  public task(name: string, task: TaskRunner): this {
 
     const parsed = this._parseName(name);
     const hooksWhitelist: string[] = [
@@ -574,37 +590,45 @@ export class Ease {
     if ( parsed.hook === 'before' ) {
 
       this._logConfig(`Registering before hook for task "${parsed.name}"`);
-      this.tasks[parsed.name].beforeHook = task;
+      this.tasks[parsed.name].beforeHook = <TaskRunner<SuspendFunction>>task;
 
     }
     else if ( parsed.hook === 'after' ) {
 
       this._logConfig(`Registering after hook for task "${parsed.name}"`);
-      this.tasks[parsed.name].afterHook = task;
+      this.tasks[parsed.name].afterHook = <TaskRunner>task;
 
     }
     else if ( parsed.hook === 'error' ) {
 
       this._logConfig(`Registering error hook for task "${parsed.name}"`);
-      this.tasks[parsed.name].errorHook = task;
+      this.tasks[parsed.name].errorHook = <TaskRunner<Error>>task;
 
     }
     else if ( parsed.hook === 'suspend' ) {
 
       this._logConfig(`Registering suspend hook for task "${parsed.name}"`);
-      this.tasks[parsed.name].suspendHook = task;
+      this.tasks[parsed.name].suspendHook = <TaskRunner>task;
 
     }
     else {
 
       this._logConfig(`Registering task "${parsed.name}"`);
-      this.tasks[parsed.name].runner = task;
+      this.tasks[parsed.name].runner = <TaskRunner>task;
 
     }
 
+    return this;
+
   }
 
-  public job(name: string, tasks: string[], options?: JobExecutionOptions): void {
+  /**
+  * Registers a job.
+  * @param name A job name.
+  * @param tasks A list of defined task names.
+  * @param options Job execution options.
+  */
+  public job(name: string, tasks: string[], options?: JobExecutionOptions): this {
 
     const parsed = this._parseName(name);
 
@@ -687,9 +711,16 @@ export class Ease {
     if ( ! this.jobs[parsed.name].options.runImmediately && ! this.jobs[parsed.name].options.schedule )
       this._logWarning(`Job "${parsed.name}" will never run due to options!`);
 
+    return this;
+
   }
 
-  public hook(job: string, task: GenericJobRunner): void {
+  /**
+  * Registers a job hook.
+  * @param job A job name followed by the hook syntax (e.g. :before).
+  * @param task A task runner to register for the hook.
+  */
+  public hook(job: string, task: JobRunner): this {
 
     const parsed = this._parseName(job);
     const hooksWhitelist: string[] = [
@@ -721,30 +752,36 @@ export class Ease {
     if ( parsed.hook === 'before' ) {
 
       this._logConfig(`Registering before hook for job "${parsed.name}"`);
-      this.jobs[parsed.name].beforeHook = task;
+      this.jobs[parsed.name].beforeHook = <JobRunner<SuspendFunction>>task;
 
     }
     else if ( parsed.hook === 'after' ) {
 
       this._logConfig(`Registering after hook for job "${parsed.name}"`);
-      this.jobs[parsed.name].afterHook = task;
+      this.jobs[parsed.name].afterHook = <JobRunner>task;
 
     }
     else if ( parsed.hook === 'error' ) {
 
       this._logConfig(`Registering error hook for job "${parsed.name}"`);
-      this.jobs[parsed.name].errorHook = task;
+      this.jobs[parsed.name].errorHook = <JobRunner<Error>>task;
 
     }
     else if ( parsed.hook === 'suspend' ) {
 
       this._logConfig(`Registering suspend hook for job "${parsed.name}"`);
-      this.jobs[parsed.name].suspendHook = task;
+      this.jobs[parsed.name].suspendHook = <JobRunner>task;
 
     }
 
+    return this;
+
   }
 
+  /**
+  * Returns a registered job's info.
+  * @param job A job name.
+  */
   public info(job: string): JobInfo {
 
     if ( ! this.jobs[job] ) throw new Error(`Job "${job}" not found!`);
@@ -756,6 +793,10 @@ export class Ease {
 
   }
 
+  /**
+  * Logs a message to the console and the logs file ($HOME/.ease/ease.log).
+  * @param message The message to log.
+  */
   public log(message: string): void {
 
     console.log(chalk.cyanBright(`[TASK] ${message}`));
@@ -764,6 +805,10 @@ export class Ease {
 
   }
 
+  /**
+  * Suspends an active job.
+  * @param jobName A job name.
+  */
   public suspend(jobName: string): void {
 
     if ( ! this.jobs[jobName] ) {
@@ -782,13 +827,21 @@ export class Ease {
 
   }
 
-  public install(name: string, module: EaseModule, ...args: any[]): void {
+  /**
+  * Installs an ease plugin as a task.
+  * @param name Task name.
+  * @param module The imported plugin.
+  * @param args Any arguments to pass into the plugin.
+  */
+  public install(name: string, module: EaseModule, ...args: any[]): this {
 
     this.task(name, module(this.log.bind(this), this._configDirname, ...args));
 
+    return this;
+
   }
 
-  public async _execJobs(jobNames: string[], runAllJobs: boolean) {
+  protected async _execJobs(jobNames: string[], runAllJobs: boolean) {
 
     if ( runAllJobs ) jobNames = _.keys(this.jobs);
 

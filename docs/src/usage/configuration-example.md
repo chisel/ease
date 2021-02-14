@@ -4,22 +4,21 @@ const got = require('got');
 module.exports = ease => {
 
   // Define sync task before hook
-  ease.task('sync-task:before', (jobName, suspend) => {
+  ease
+  .task('sync-task:before', (jobName, suspend) => {
 
     ease.log('Running sync-task:before inside job ' + jobName);
     // Suspend sync-task
     suspend();
 
-  });
-
-  ease.task('sync-task', jobName => {
+  })
+  .task('sync-task', jobName => {
 
     ease.log('Running sync-task'); // Won't run since task was suspended
 
-  });
-
+  })
   // Define async task
-  ease.task('async-task', jobName => {
+  .task('async-task', jobName => {
 
     return new Promise((resolve, reject) => {
 
@@ -34,20 +33,17 @@ module.exports = ease => {
 
     });
 
-  });
-
+  })
   // Define async task after hook
-  ease.task('async-task:after', jobName => {
+  .task('async-task:after', jobName => {
 
     ease.log('Cleaning up...');
     ease.suspend(jobName); // Suspends the current job, no tasks will be run after this point
 
-  });
-
-  ease.job('test', ['sync-task', 'async-task', 'sync-task']);
-
+  })
+  .job('test', ['sync-task', 'async-task', 'sync-task']);
   // Define job error handler
-  ease.hook('test:error', error => {
+  .hook('test:error', error => {
 
     ease.log('Caught error: ' + error);
 

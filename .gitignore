@@ -1,3 +1,4 @@
 node_modules
 /easeconfig.js
+/easeconfig.ts
 bin

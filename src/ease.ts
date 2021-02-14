@@ -1,9 +1,9 @@
 #!/usr/bin/env node
-
 import 'source-map-support/register';
 import path from 'path';
 import app from 'argumental';
 import fs from 'fs-extra';
+import { register } from 'ts-node';
 import { EaseConfig } from './lib/models';
 import { Ease } from './lib/ease';
 
@@ -35,23 +35,29 @@ app
 
   let easeconfigPath = path.isAbsolute(opts.config) ? opts.config : path.resolve(process.cwd(), opts.config);
 
-  // Look for easeconfig.js
+  // Look for easeconfig file
   let currentDir = process.cwd();
   let found = false;
 
   while ( ! found ) {
 
-    // Look for easeconfig.js
+    // Look for easeconfig file
     if ( await fs.pathExists(path.resolve(currentDir, 'easeconfig.js')) ) {
 
       easeconfigPath = path.resolve(currentDir, 'easeconfig.js');
       found = true;
 
     }
+    else if ( await fs.pathExists(path.resolve(currentDir, 'easeconfig.ts')) ) {
+
+      easeconfigPath = path.resolve(currentDir, 'easeconfig.ts');
+      found = true;
+
+    }
     // If reached root directory
     else if ( path.parse(process.cwd()).root === currentDir ) {
 
-      app.error('Could not locate easeconfig.js file!');
+      app.error('Could not locate ease config file!');
       process.exit(1);
 
     }
@@ -64,15 +70,38 @@ app
 
   }
 
+  // Register TS handler
+  if ( path.extname(easeconfigPath) === '.ts' )
+    register({ dir: path.dirname(easeconfigPath) });
+
   // Load easeconfig file
-  const config: EaseConfig = require(easeconfigPath);
+  let config = require(easeconfigPath);
+
+  // Sanitize and validate import
+  if ( typeof config !== 'function' ) {
+
+    if ( config && typeof config === 'object' && config.hasOwnProperty('default') && typeof config.default === 'function' ) {
+
+      config = config.default;
+
+    }
+    else {
+
+      app.error(`Invalid ${path.basename(easeconfigPath)}! Config file does not export a function.`);
+      process.exit(1);
+
+    }
+
+  }
+
+  // Instantiate Ease
   const ease = new Ease(opts.verbose, path.dirname(easeconfigPath));
 
   // Configure ease
-  config(ease);
+  (<EaseConfig>config)(ease);
 
   // Execute the jobs
-  ease._execJobs(args.jobs, opts.all);
+  (<any>ease)._execJobs(args.jobs, opts.all);
 
 })
 
