@@ -19,6 +19,9 @@ app
 
 .on('validators:after', data => {
 
+  // Skip if help or version is used
+  if ( data.opts.help || data.opts.version ) return;
+
   // If no jobs provided while --all is false
   if ( ! data.opts.all && ! data.args.jobs?.length ) {
 
