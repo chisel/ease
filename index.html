@@ -68,7 +68,6 @@
 <li><code>ease.suspend(jobName)</code>: Suspends a job by name.</li>
 <li><code>ease.info(jobName)</code>: Returns an object with members <code>tasks</code> and <code>options</code> which are a list of the registered tasks and the options of the job. This info can help dynamically redefining jobs.</li>
 <li><code>ease.log(message)</code>: Logs a message which will be shown on the console and logged into <code>ease.log</code> file.</li>
-<li><code>ease.request(options)</code>: Sends an HTTP request using the given <a href="https://www.npmjs.com/package/request#requestoptions-callback">options</a> and returns a promise with the response (the body of the response will be parsed to JSON if <code>content-type</code> header is set to <code>application/json</code> by the target.)</li>
 <li><code>ease.install(taskName, plugin, ...args)</code>: Installs a plugin as a task with the given name. <code>...args</code> will be sent to the plugin.</li>
 </ul>
 
@@ -154,7 +153,7 @@
     <span class="token keyword">return</span> <span class="token keyword">new</span> <span class="token class-name">Promise</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token parameter">resolve<span class="token punctuation">,</span> reject</span><span class="token punctuation">)</span> <span class="token operator">=></span> <span class="token punctuation">{</span>
 
       ease<span class="token punctuation">.</span><span class="token function">request</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
-        uri<span class="token punctuation">:</span> <span class="token string">'https://google.com'</span>
+        uri<span class="token operator">:</span> <span class="token string">'https://google.com'</span>
       <span class="token punctuation">}</span><span class="token punctuation">)</span>
       <span class="token punctuation">.</span><span class="token function">then</span><span class="token punctuation">(</span><span class="token parameter">response</span> <span class="token operator">=></span> <span class="token punctuation">{</span>
 
@@ -201,11 +200,11 @@
 
   <span class="token comment">// Schedule job to run every Monday at 5 in the afternoon</span>
   ease<span class="token punctuation">.</span><span class="token function">job</span><span class="token punctuation">(</span><span class="token string">'job1'</span><span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token string">'task1'</span><span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token punctuation">{</span>
-    runImmediately<span class="token punctuation">:</span> <span class="token boolean">false</span><span class="token punctuation">,</span>
-    schedule<span class="token punctuation">:</span> <span class="token punctuation">{</span>
-      recurrence<span class="token punctuation">:</span> <span class="token string">'weekly'</span><span class="token punctuation">,</span>
-      day<span class="token punctuation">:</span> <span class="token number">1</span><span class="token punctuation">,</span>
-      time<span class="token punctuation">:</span> <span class="token string">'17:00:00'</span>
+    runImmediately<span class="token operator">:</span> <span class="token boolean">false</span><span class="token punctuation">,</span>
+    schedule<span class="token operator">:</span> <span class="token punctuation">{</span>
+      recurrence<span class="token operator">:</span> <span class="token string">'weekly'</span><span class="token punctuation">,</span>
+      day<span class="token operator">:</span> <span class="token number">1</span><span class="token punctuation">,</span>
+      time<span class="token operator">:</span> <span class="token string">'17:00:00'</span>
     <span class="token punctuation">}</span>
   <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
 
@@ -223,7 +222,7 @@
  module<span class="token punctuation">.</span><span class="token function-variable function">exports</span> <span class="token operator">=</span> <span class="token parameter">ease</span> <span class="token operator">=></span> <span class="token punctuation">{</span>
 
    <span class="token comment">// Install the plugin as `sass` task</span>
-   ease<span class="token punctuation">.</span><span class="token function">install</span><span class="token punctuation">(</span><span class="token string">'sass'</span><span class="token punctuation">,</span> sass<span class="token punctuation">,</span> <span class="token punctuation">{</span> dir<span class="token punctuation">:</span> <span class="token string">'sass'</span><span class="token punctuation">,</span> ourDir<span class="token punctuation">:</span> <span class="token string">'css'</span><span class="token punctuation">,</span> sourceMap<span class="token punctuation">:</span> <span class="token boolean">true</span> <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+   ease<span class="token punctuation">.</span><span class="token function">install</span><span class="token punctuation">(</span><span class="token string">'sass'</span><span class="token punctuation">,</span> sass<span class="token punctuation">,</span> <span class="token punctuation">{</span> dir<span class="token operator">:</span> <span class="token string">'sass'</span><span class="token punctuation">,</span> ourDir<span class="token operator">:</span> <span class="token string">'css'</span><span class="token punctuation">,</span> sourceMap<span class="token operator">:</span> <span class="token boolean">true</span> <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
 
    <span class="token comment">// Use the task in a job</span>
    ease<span class="token punctuation">.</span><span class="token function">job</span><span class="token punctuation">(</span><span class="token string">'process-sass-files'</span><span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token string">'sass'</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
@@ -267,7 +266,7 @@ module<span class="token punctuation">.</span><span class="token function-variab
 
       <span class="token keyword">const</span> finalPath <span class="token operator">=</span> path<span class="token punctuation">.</span><span class="token function">join</span><span class="token punctuation">(</span>dirname<span class="token punctuation">,</span> config<span class="token punctuation">.</span>dir<span class="token punctuation">)</span><span class="token punctuation">;</span>
 
-      <span class="token function">logger</span><span class="token punctuation">(</span><span class="token template-string"><span class="token string">`Emptying "</span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>finalPath<span class="token interpolation-punctuation punctuation">}</span></span><span class="token string">"...`</span></span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token function">logger</span><span class="token punctuation">(</span><span class="token template-string"><span class="token template-punctuation string">`</span><span class="token string">Emptying "</span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>finalPath<span class="token interpolation-punctuation punctuation">}</span></span><span class="token string">"...</span><span class="token template-punctuation string">`</span></span><span class="token punctuation">)</span><span class="token punctuation">;</span>
 
       <span class="token comment">// Empty the directory's content</span>
       fs<span class="token punctuation">.</span><span class="token function">emptyDir</span><span class="token punctuation">(</span>finalPath<span class="token punctuation">,</span> <span class="token parameter">error</span> <span class="token operator">=></span> <span class="token punctuation">{</span>
