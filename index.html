@@ -52,8 +52,18 @@
           <pre><code>npm install @chisel/ease -g</code></pre>
         <h1 id="usage">Usage</h1>
         <hr>
-          <p>Ease looks for a configuration file named <code>easeconfig.js</code> inside the current working directory for task and job definitions. The configuration file must export a function which accepts the <code>ease</code> object as its parameter, which can be used to define tasks, jobs, schedules, etc.</p>
+          <p>Ease looks for a configuration file named <code>easeconfig.js</code> or <code>easeconfig.ts</code> (in that exact order) inside the current working directory for task and job definitions. If the file was not found, it would look in the parent directories all the way up to the root.</p>
+<p>The configuration file must export a function which takes the <code>ease</code> object as its parameter, which can be used to define tasks, jobs, schedules, etc.</p>
+<p>easeconfig.js</p>
 <pre><code class="language-js">module<span class="token punctuation">.</span><span class="token function-variable function">exports</span> <span class="token operator">=</span> <span class="token parameter">ease</span> <span class="token operator">=></span> <span class="token punctuation">{</span>
+
+  <span class="token comment">// Use the ease object here</span>
+
+<span class="token punctuation">}</span><span class="token punctuation">;</span></code></pre>
+<p>easeconfig.ts</p>
+<pre><code class="language-ts"><span class="token keyword">import</span> <span class="token punctuation">{</span> Ease <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'@chisel/ease'</span><span class="token punctuation">;</span>
+
+<span class="token keyword">export</span> <span class="token keyword">default</span> <span class="token punctuation">(</span>ease<span class="token operator">:</span> Ease<span class="token punctuation">)</span> <span class="token operator">=></span> <span class="token punctuation">{</span>
 
   <span class="token comment">// Use the ease object here</span>
 
@@ -62,13 +72,13 @@
         <h1 id="usage-api">API</h1>
         <hr>
           <ul>
-<li><code>ease.task(name, callback)</code>: Defines a task with the given name and calls the callback for performing the task. The call back should either return void (for synchronous execution) or return a void promise (for asynchronous execution). Callback will be called with two parameters: <code>jobName</code> which holds the current executing job name and either <code>suspend</code>, which is a function that suspends the current task from running (only available on the <code>:before</code> hook) or <code>error</code> which is an error object (only available on the <code>:error</code> hook.)</li>
-<li><code>ease.job(name, tasks [,options])</code>: Defines a job with the given name and a list of the tasks to execute in order. An optional <a href="#job-execution-options">Job Execution Options</a> object can be provided.</li>
-<li><code>ease.hook(name, callback)</code>: Defines a job hook with a callback.</li>
+<li><code>ease.task(name, callback)</code>: Defines a task with the given name and calls the callback for performing the task. The call back should either return void (for synchronous execution) or return a void promise (for asynchronous execution). Callback will be called with two parameters: <code>jobName</code> which holds the current executing job name and either <code>suspend</code>, which is a function that suspends the current task from running (only available on the <code>:before</code> hook) or <code>error</code> which is an error object (only available on the <code>:error</code> hook.) Return the ease instance for chaining.</li>
+<li><code>ease.job(name, tasks [,options])</code>: Defines a job with the given name and a list of the tasks to execute in order. An optional <a href="#usage-job-execution-options">Job Execution Options</a> object can be provided. Return the ease instance for chaining.</li>
+<li><code>ease.hook(name, callback)</code>: Defines a job hook with a callback. Return the ease instance for chaining.</li>
 <li><code>ease.suspend(jobName)</code>: Suspends a job by name.</li>
 <li><code>ease.info(jobName)</code>: Returns an object with members <code>tasks</code> and <code>options</code> which are a list of the registered tasks and the options of the job. This info can help dynamically redefining jobs.</li>
 <li><code>ease.log(message)</code>: Logs a message which will be shown on the console and logged into <code>ease.log</code> file.</li>
-<li><code>ease.install(taskName, plugin, ...args)</code>: Installs a plugin as a task with the given name. <code>...args</code> will be sent to the plugin.</li>
+<li><code>ease.install(taskName, plugin, ...args)</code>: Installs a plugin as a task with the given name. <code>...args</code> will be sent to the plugin. Return the ease instance for chaining.</li>
 </ul>
 
         <h1 id="usage-task-hooks">Task Hooks</h1>
@@ -135,22 +145,21 @@
 module<span class="token punctuation">.</span><span class="token function-variable function">exports</span> <span class="token operator">=</span> <span class="token parameter">ease</span> <span class="token operator">=></span> <span class="token punctuation">{</span>
 
   <span class="token comment">// Define sync task before hook</span>
-  ease<span class="token punctuation">.</span><span class="token function">task</span><span class="token punctuation">(</span><span class="token string">'sync-task:before'</span><span class="token punctuation">,</span> <span class="token punctuation">(</span><span class="token parameter">jobName<span class="token punctuation">,</span> suspend</span><span class="token punctuation">)</span> <span class="token operator">=></span> <span class="token punctuation">{</span>
+  ease
+  <span class="token punctuation">.</span><span class="token function">task</span><span class="token punctuation">(</span><span class="token string">'sync-task:before'</span><span class="token punctuation">,</span> <span class="token punctuation">(</span><span class="token parameter">jobName<span class="token punctuation">,</span> suspend</span><span class="token punctuation">)</span> <span class="token operator">=></span> <span class="token punctuation">{</span>
 
     ease<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token string">'Running sync-task:before inside job '</span> <span class="token operator">+</span> jobName<span class="token punctuation">)</span><span class="token punctuation">;</span>
     <span class="token comment">// Suspend sync-task</span>
     <span class="token function">suspend</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
 
-  <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-
-  ease<span class="token punctuation">.</span><span class="token function">task</span><span class="token punctuation">(</span><span class="token string">'sync-task'</span><span class="token punctuation">,</span> <span class="token parameter">jobName</span> <span class="token operator">=></span> <span class="token punctuation">{</span>
+  <span class="token punctuation">}</span><span class="token punctuation">)</span>
+  <span class="token punctuation">.</span><span class="token function">task</span><span class="token punctuation">(</span><span class="token string">'sync-task'</span><span class="token punctuation">,</span> <span class="token parameter">jobName</span> <span class="token operator">=></span> <span class="token punctuation">{</span>
 
     ease<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token string">'Running sync-task'</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// Won't run since task was suspended</span>
 
-  <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-
+  <span class="token punctuation">}</span><span class="token punctuation">)</span>
   <span class="token comment">// Define async task</span>
-  ease<span class="token punctuation">.</span><span class="token function">task</span><span class="token punctuation">(</span><span class="token string">'async-task'</span><span class="token punctuation">,</span> <span class="token parameter">jobName</span> <span class="token operator">=></span> <span class="token punctuation">{</span>
+  <span class="token punctuation">.</span><span class="token function">task</span><span class="token punctuation">(</span><span class="token string">'async-task'</span><span class="token punctuation">,</span> <span class="token parameter">jobName</span> <span class="token operator">=></span> <span class="token punctuation">{</span>
 
     <span class="token keyword">return</span> <span class="token keyword">new</span> <span class="token class-name">Promise</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token parameter">resolve<span class="token punctuation">,</span> reject</span><span class="token punctuation">)</span> <span class="token operator">=></span> <span class="token punctuation">{</span>
 
@@ -165,20 +174,17 @@ module<span class="token punctuation">.</span><span class="token function-variab
 
     <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
 
-  <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-
+  <span class="token punctuation">}</span><span class="token punctuation">)</span>
   <span class="token comment">// Define async task after hook</span>
-  ease<span class="token punctuation">.</span><span class="token function">task</span><span class="token punctuation">(</span><span class="token string">'async-task:after'</span><span class="token punctuation">,</span> <span class="token parameter">jobName</span> <span class="token operator">=></span> <span class="token punctuation">{</span>
+  <span class="token punctuation">.</span><span class="token function">task</span><span class="token punctuation">(</span><span class="token string">'async-task:after'</span><span class="token punctuation">,</span> <span class="token parameter">jobName</span> <span class="token operator">=></span> <span class="token punctuation">{</span>
 
     ease<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token string">'Cleaning up...'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
     ease<span class="token punctuation">.</span><span class="token function">suspend</span><span class="token punctuation">(</span>jobName<span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// Suspends the current job, no tasks will be run after this point</span>
 
-  <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-
-  ease<span class="token punctuation">.</span><span class="token function">job</span><span class="token punctuation">(</span><span class="token string">'test'</span><span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token string">'sync-task'</span><span class="token punctuation">,</span> <span class="token string">'async-task'</span><span class="token punctuation">,</span> <span class="token string">'sync-task'</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-
+  <span class="token punctuation">}</span><span class="token punctuation">)</span>
+  <span class="token punctuation">.</span><span class="token function">job</span><span class="token punctuation">(</span><span class="token string">'test'</span><span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token string">'sync-task'</span><span class="token punctuation">,</span> <span class="token string">'async-task'</span><span class="token punctuation">,</span> <span class="token string">'sync-task'</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
   <span class="token comment">// Define job error handler</span>
-  ease<span class="token punctuation">.</span><span class="token function">hook</span><span class="token punctuation">(</span><span class="token string">'test:error'</span><span class="token punctuation">,</span> <span class="token parameter">error</span> <span class="token operator">=></span> <span class="token punctuation">{</span>
+  <span class="token punctuation">.</span><span class="token function">hook</span><span class="token punctuation">(</span><span class="token string">'test:error'</span><span class="token punctuation">,</span> <span class="token parameter">error</span> <span class="token operator">=></span> <span class="token punctuation">{</span>
 
     ease<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token string">'Caught error: '</span> <span class="token operator">+</span> error<span class="token punctuation">)</span><span class="token punctuation">;</span>
 
