@@ -130,7 +130,9 @@
 
         <h1 id="usage-configuration-example">Configuration Example</h1>
         <hr>
-          <pre><code class="language-js">module<span class="token punctuation">.</span><span class="token function-variable function">exports</span> <span class="token operator">=</span> <span class="token parameter">ease</span> <span class="token operator">=></span> <span class="token punctuation">{</span>
+          <pre><code class="language-js"><span class="token keyword">const</span> got <span class="token operator">=</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'got'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+module<span class="token punctuation">.</span><span class="token function-variable function">exports</span> <span class="token operator">=</span> <span class="token parameter">ease</span> <span class="token operator">=></span> <span class="token punctuation">{</span>
 
   <span class="token comment">// Define sync task before hook</span>
   ease<span class="token punctuation">.</span><span class="token function">task</span><span class="token punctuation">(</span><span class="token string">'sync-task:before'</span><span class="token punctuation">,</span> <span class="token punctuation">(</span><span class="token parameter">jobName<span class="token punctuation">,</span> suspend</span><span class="token punctuation">)</span> <span class="token operator">=></span> <span class="token punctuation">{</span>
@@ -152,9 +154,7 @@
 
     <span class="token keyword">return</span> <span class="token keyword">new</span> <span class="token class-name">Promise</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token parameter">resolve<span class="token punctuation">,</span> reject</span><span class="token punctuation">)</span> <span class="token operator">=></span> <span class="token punctuation">{</span>
 
-      ease<span class="token punctuation">.</span><span class="token function">request</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
-        uri<span class="token operator">:</span> <span class="token string">'https://google.com'</span>
-      <span class="token punctuation">}</span><span class="token punctuation">)</span>
+      got<span class="token punctuation">.</span><span class="token function">get</span><span class="token punctuation">(</span><span class="token string">'https://google.com'</span><span class="token punctuation">)</span>
       <span class="token punctuation">.</span><span class="token function">then</span><span class="token punctuation">(</span><span class="token parameter">response</span> <span class="token operator">=></span> <span class="token punctuation">{</span>
 
         ease<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token string">'Got response'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
