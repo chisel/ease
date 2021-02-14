@@ -4,5 +4,4 @@
 - `ease.suspend(jobName)`: Suspends a job by name.
 - `ease.info(jobName)`: Returns an object with members `tasks` and `options` which are a list of the registered tasks and the options of the job. This info can help dynamically redefining jobs.
 - `ease.log(message)`: Logs a message which will be shown on the console and logged into `ease.log` file.
-- `ease.request(options)`: Sends an HTTP request using the given [options](https://www.npmjs.com/package/request#requestoptions-callback) and returns a promise with the response (the body of the response will be parsed to JSON if `content-type` header is set to `application/json` by the target.)
 - `ease.install(taskName, plugin, ...args)`: Installs a plugin as a task with the given name. `...args` will be sent to the plugin.
